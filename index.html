@@ -1117,8 +1117,8 @@ document.getElementById('resetBtn').addEventListener('click', () => {
   };
   function renderAuxViews(){
     const t=translations[lang];
-    const learnedCount=(window.learned && typeof learned.size==='number')?learned.size:0;
-    const total=(window.UNITS && UNITS.length)?UNITS.length:378;
+    const learnedCount=(typeof learned!=='undefined' && typeof learned.size==='number')?learned.size:0;
+    const total=(typeof UNITS!=='undefined' && UNITS.length)?UNITS.length:378;
     const pct=total?Math.round(learnedCount/total*100):0;
     const p=document.getElementById('gtProgressView');
     const m=document.getElementById('gtMapView');
