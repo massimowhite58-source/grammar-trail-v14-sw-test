@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="theme-color" content="#f4f1e6">
+<meta name="theme-color" content="#000080">
 <title>Grammar Trail — конспект трёх учебников</title>
 <style>
 /* No external CDNs or web fonts — everything below runs offline.
@@ -389,16 +389,171 @@ button, input{touch-action:manipulation;}
 }
 </style>
 
-  <meta name="theme-color" content="#0b1220">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Grammar Trail">
-  <link rel="manifest" href="./manifest.webmanifest">
-  <link rel="apple-touch-icon" href="./icon-192.png">
+<style id="theme-v1-3">
+/* Grammar Trail v1.3 — restored blue theme + white text for mobile readability. */
+:root{
+  --primary:#000080;
+  --content:#8080FF;
+  --accent:#f2c9b3;
+  --white:#FFFFFF;
+  --primary-dark:#00005c;
+  --paper:var(--content);
+  --paper-2:rgba(0,0,128,.28);
+  --ink:var(--white);
+  --ink-soft:var(--white);
+  --ink-faint:var(--white);
+  --line:rgba(255,255,255,.28);
+  --shadow:0 4px 18px rgba(0,0,80,.22);
+}
+html,body{background:var(--content);color:var(--white);}
+body{background:var(--content);}
+.hero{background:var(--primary);color:var(--white);margin:0 -20px;padding:24px 20px 22px;border-radius:0 0 var(--radius) var(--radius);box-shadow:var(--shadow);}
+.hero h1{color:var(--white);}
+.hero p.sub,.hero p.sub b{color:var(--white);}
+.hero-stat .num{color:var(--accent);}
+.hero-stat .num span,.hero-stat .lbl{color:var(--white);}
+.trail-card{background:var(--primary);border-color:var(--primary);color:var(--white);}
+.trail-levels,.trail-levels b,.trail-legend{color:var(--white);}
+.search-row input{background:var(--primary);border-color:var(--primary);color:var(--white);}
+.search-row input::placeholder{color:rgba(255,255,255,.82);}
+.search-row input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(242,201,179,.25);}
+.search-row svg.icon,.search-clear{color:var(--accent);}
+.search-results{background:var(--primary);border-color:var(--primary);}
+.search-hit{border-bottom-color:rgba(242,201,179,.25);color:var(--white);}
+.search-hit:hover{background:var(--primary-dark);}
+.search-hit .tag{background:var(--accent) !important;color:var(--primary);}
+.search-hit .txt .path,.search-empty,.search-hit .txt b{color:var(--white);}
+.zone-head h2{color:var(--white);}
+.zone-head .zsub,.zone-progress{color:var(--white);}
+.zone-swatch{background:var(--accent) !important;}
+.block-card,.block-open{background:var(--primary);border-color:var(--primary);color:var(--white);}
+.block-card:hover{box-shadow:0 7px 22px rgba(0,0,80,.30);}
+.block-bar{background:rgba(242,201,179,.25);}
+.block-bar > div{background:var(--accent) !important;}
+.block-card .bmeta{color:var(--white);}
+.block-open-head button{background:var(--content);color:var(--white);border:1px solid var(--accent);}
+.unit-chip{background:var(--content);border-color:rgba(242,201,179,.55);color:var(--white);}
+.unit-chip:hover{border-color:var(--accent);}
+.unit-chip .t{color:var(--white);}
+.unit-chip.done{background:rgba(242,201,179,.22);border-color:var(--accent) !important;}
+.unit-chip .check{color:var(--accent);}
+.overlay{background:rgba(0,0,40,.58);}
+.panel{background:var(--primary);color:var(--white);box-shadow:-8px 0 30px rgba(0,0,50,.35);}
+.panel-book-tag{background:var(--accent) !important;color:var(--primary);}
+.panel-close{background:var(--content);border-color:var(--accent);color:var(--white);}
+.panel .block-name{color:var(--white);}
+.rule-box{background:var(--content);border-color:rgba(242,201,179,.45);border-left-color:var(--accent) !important;color:var(--white);}
+.rule-box .lbl,.examples h4{color:var(--white);}
+.ex-item{border-top-color:rgba(242,201,179,.28);}
+.ex-num,.ex-text .en,.ex-text .ru{color:var(--white);}
+.mark-btn.off{background:var(--accent);color:var(--primary);}
+.mark-btn.on{background:var(--content);color:var(--white);border-color:var(--accent);}
+.panel-nav button{background:var(--content);color:var(--white);border-color:var(--accent);}
+.footer{border-top-color:rgba(242,201,179,.35);color:var(--white);}
+.footer button{color:var(--white);}
+#heroNum{color:var(--accent);}
+#heroNum span{color:var(--white);}
+#trailSvg .trail-node circle.bg{stroke:var(--accent) !important;}
+#trailSvg .trail-node text{fill:var(--white) !important;}
+</style>
 
+<style id="welcome-screen-v2">
+/* Grammar Trail welcome screen — iPhone-first */
+html.gt-welcome-active, body.gt-welcome-active{background:#000080;}
+body.gt-welcome-active{overflow:hidden;}
+body.gt-welcome-active > .wrap,
+body.gt-welcome-active > .overlay,
+body.gt-welcome-active > .panel{display:none !important;}
+.gt-welcome{
+  position:fixed; inset:0; z-index:9999; overflow:hidden;
+  background:linear-gradient(180deg,#000080 0%,#05058f 58%,#08088f 100%);
+  color:#fff; font-family:Arial,Helvetica,sans-serif;
+  display:flex; flex-direction:column; align-items:center;
+  padding:calc(env(safe-area-inset-top) + 24px) 24px calc(env(safe-area-inset-bottom) + 18px);
+  box-sizing:border-box;
+  text-align:center;
+}
+.gt-welcome[hidden]{display:none;}
+.gt-welcome.is-leaving{animation:gtWelcomeOut .34s ease forwards;}
+@keyframes gtWelcomeOut{from{opacity:1;transform:scale(1)}to{opacity:0;transform:scale(.985)}}
+@media (prefers-reduced-motion:reduce){.gt-welcome.is-leaving{animation:none;opacity:0;}}
+.gt-welcome-logo{margin-top:8px; display:flex; flex-direction:column; align-items:center; flex:0 0 auto;}
+.gt-welcome-logo svg{width:min(145px,34vw); height:auto; display:block;}
+.gt-welcome-brand{
+  margin-top:4px; font-family:Georgia,'Times New Roman',serif; font-weight:700;
+  font-size:clamp(36px,10.5vw,54px); line-height:.86; letter-spacing:-1.5px;
+}
+.gt-welcome-greeting{
+  margin:clamp(42px,9vh,78px) 0 0;
+  font-family:Georgia,'Times New Roman',serif; font-weight:700;
+  font-size:clamp(42px,11.5vw,58px); line-height:.98; letter-spacing:-1.4px;
+}
+.gt-welcome-sub{
+  margin:18px auto 0; max-width:360px; font-size:clamp(17px,4.7vw,21px);
+  line-height:1.38; color:#fff;
+}
+.gt-welcome-start{
+  margin-top:clamp(28px,5vh,42px); width:min(100%,420px); height:64px;
+  border:0; border-radius:999px; background:#f2c9b3; color:#000080;
+  font:700 18px Arial,Helvetica,sans-serif; letter-spacing:.1px;
+  display:flex; align-items:center; justify-content:center; gap:20px;
+  box-shadow:0 8px 22px rgba(0,0,0,.18); cursor:pointer;
+  -webkit-tap-highlight-color:transparent; touch-action:manipulation;
+}
+.gt-welcome-start:active{transform:scale(.985);}
+.gt-welcome-start .arrow{font-size:30px; line-height:1; margin-top:-2px;}
+.gt-welcome-progress{
+  width:40px; height:40px; border-radius:50%; position:relative; display:grid; place-items:center;
+  background:conic-gradient(#fff var(--progress,0%), rgba(0,0,128,.22) 0);
+}
+.gt-welcome-progress::before{content:""; position:absolute; inset:4px; border-radius:50%; background:#1c2a62;}
+.gt-welcome-progress span{position:relative; z-index:1; color:#fff; font-size:11px; font-weight:700;}
+.gt-welcome-art{position:absolute; left:0; right:0; bottom:34px; width:100%; height:31vh; min-height:190px; max-height:300px; pointer-events:none;}
+.gt-welcome-art svg{width:100%; height:100%; display:block;}
+.gt-welcome-dots{position:absolute; bottom:calc(env(safe-area-inset-bottom) + 34px); display:flex; gap:12px; z-index:2;}
+.gt-welcome-dots span{width:10px;height:10px;border-radius:50%;background:#6262e8;}
+.gt-welcome-dots span.active{background:#f2c9b3;}
+.gt-welcome-homebar{position:absolute; bottom:calc(env(safe-area-inset-bottom) + 8px); width:120px; height:5px; border-radius:99px; background:#fff; opacity:.95;}
+@media (max-height:700px){
+  .gt-welcome-logo svg{width:100px}.gt-welcome-brand{font-size:38px}
+  .gt-welcome-greeting{margin-top:24px;font-size:42px}.gt-welcome-sub{margin-top:12px;font-size:16px}
+  .gt-welcome-start{margin-top:20px;height:56px}.gt-welcome-art{height:25vh;min-height:150px}.gt-welcome-dots{bottom:calc(env(safe-area-inset-bottom) + 28px)}
+}
+@media (min-width:700px){.gt-welcome{padding-left:32px;padding-right:32px}.gt-welcome-start{max-width:390px}.gt-welcome-art{max-width:900px;left:50%;right:auto;transform:translateX(-50%);width:900px}}
+</style>
+<link rel="manifest" href="./manifest.webmanifest">
 </head>
-<body>
+<body class="gt-welcome-active">
+
+<div class="gt-welcome" id="welcomeScreen">
+  <div class="gt-welcome-logo" aria-hidden="true">
+    <svg viewBox="0 0 240 190" fill="none">
+      <path d="M34 151 91 83l24 25 37-56 54 99-48-30-24 17-22-23-35 38-43 18Z" fill="#f2c9b3"/>
+      <path d="M115 52v70" stroke="#f2c9b3" stroke-width="7" stroke-linecap="round"/>
+      <path d="M116 51c22 0 31 5 43 0-10 11-10 18-43 11V51Z" fill="#f2c9b3"/>
+      <path d="M119 112c-19 13-31 18-26 28 5 10 29 9 48 20-8-13-25-20-30-27-5-6 5-11 8-21Z" fill="#000080"/>
+    </svg>
+    <div class="gt-welcome-brand">Grammar<br>Trail</div>
+  </div>
+  <h1 class="gt-welcome-greeting">Hello, darling</h1>
+  <p class="gt-welcome-sub">Let’s explore English grammar<br>together and reach your goals!</p>
+  <button class="gt-welcome-start" id="welcomeStart" type="button" aria-label="Начать">
+    <span>Начать</span><span class="arrow">→</span>
+    <span class="gt-welcome-progress" id="welcomeProgress"><span>0</span></span>
+  </button>
+  <div class="gt-welcome-art" aria-hidden="true">
+    <svg viewBox="0 0 900 330" preserveAspectRatio="none">
+      <path d="M0 258c95-37 145 8 231-7 90-16 112-65 196-48 75 15 97 3 145-36 50-41 95-60 141-43 51 18 73 66 187 54v152H0Z" fill="#1414a1"/>
+      <path d="M0 302c95-34 170-26 255-49 91-25 135-75 211-51 61 19 90-8 139-50 56-48 91-62 137-37 51 28 79 75 158 71v144H0Z" fill="#2020ba"/>
+      <path d="M283 330c90-55 171-71 253-108 71-32 105-59 125-100 13-27 35-46 63-45 28 1 54 21 69 48 13 23 26 35 55 45-35-3-63-10-82-24-21-15-37-32-57-31-18 1-28 17-36 36-17 39-49 74-119 108-73 35-131 52-190 71H283Z" fill="#7777ff"/>
+      <path d="M664 72 716 0l37 45 35-20 46 61-69-24-29 28-30-18-42 32Z" fill="#4242d8"/>
+      <path d="M716 2v54" stroke="#f2c9b3" stroke-width="5" stroke-linecap="round"/>
+      <path d="M718 2c16 0 22 4 31 0-7 8-7 12-31 8V2Z" fill="#f2c9b3"/>
+    </svg>
+  </div>
+  <div class="gt-welcome-dots" aria-hidden="true"><span class="active"></span><span></span><span></span></div>
+  <div class="gt-welcome-homebar" aria-hidden="true"></div>
+</div>
 
 <div class="wrap">
 
@@ -796,22 +951,63 @@ document.getElementById('resetBtn').addEventListener('click', () => {
   }
 });
 
+// ---------- welcome screen ----------
+// The welcome screen is intentionally shown on EVERY app launch.
+// It is a launch/splash screen, not a one-time onboarding screen.
+(function initWelcome(){
+  const screen = document.getElementById('welcomeScreen');
+  const start = document.getElementById('welcomeStart');
+  const progress = document.getElementById('welcomeProgress');
+  if(!screen || !start) return;
+
+  let count = 0;
+  try{
+    const raw = localStorage.getItem('gt_learned_units');
+    if(raw){
+      const parsed = JSON.parse(raw);
+      count = Array.isArray(parsed) ? parsed.length : 0;
+    }
+  }catch(e){}
+
+  const total = (typeof UNITS !== 'undefined' && UNITS.length) ? UNITS.length : 378;
+  const pct = Math.max(0, Math.min(100, (count / total) * 100));
+  if(progress){
+    progress.style.setProperty('--progress', pct + '%');
+    const value = progress.querySelector('span');
+    if(value) value.textContent = count;
+  }
+
+  start.addEventListener('click', ()=>{
+    if(start.disabled) return;
+    start.disabled = true;
+    start.setAttribute('aria-busy','true');
+    screen.classList.add('is-leaving');
+
+    const finish = ()=>{
+      screen.hidden = true;
+      document.body.classList.remove('gt-welcome-active');
+      start.removeAttribute('aria-busy');
+    };
+
+    // Keep the short exit animation, but never let it block the app.
+    window.setTimeout(finish, 340);
+  });
+})();
+
 // Boot synchronously so the dashboard is visible even when a mobile browser
 // delays/restricts storage APIs for local HTML files.
 try{ render(); }catch(e){
   console.error('Grammar Trail render error:', e);
 }
 loadProgress();
-</script>
 
-<script>
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", function () {
-    navigator.serviceWorker.register("./service-worker.js", {scope: "./"})
-      .catch(function (err) { console.warn("PWA service worker:", err); });
+// Keep the PWA shell fresh after deployment updates.
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('./service-worker.js', {scope:'./'})
+      .catch(function(err){ console.warn('PWA service worker:', err); });
   });
 }
 </script>
-
 </body>
 </html>
