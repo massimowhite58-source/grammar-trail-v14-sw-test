@@ -138,11 +138,13 @@ function renderKeepPhase() {
   // Re-render the same current phase after a wrong answer; existing events remain intact.
   const decision=decideNextAction({events,session:activeSession,safety:SAFETY.SAFE,taskBank});
   const task=decision.task;if(!task)return render();
+  $("submitBtn").textContent="Проверить ответ";
+  $("submitBtn").onclick=checkAnswer;
   $("answerArea").replaceChildren();selected=null;
   if(task.kind==="choice") task.options.forEach((option,index)=>{const b=document.createElement("button");b.type="button";b.className="choice";b.textContent=option;b.setAttribute("aria-pressed","false");b.addEventListener("click",()=>{selected=index;[...$("answerArea").querySelectorAll("button")].forEach((x,i)=>x.setAttribute("aria-pressed",String(i===index)));});$("answerArea").append(b);});
   else {const i=document.createElement("input");i.id="freeAnswer";i.placeholder="Введи форму глагола";i.setAttribute("aria-label","Твой ответ");i.addEventListener("input",()=>selected=i.value.trim());$("answerArea").append(i);}
 }
-$("submitBtn").addEventListener("click",checkAnswer);
+$("submitBtn").onclick=checkAnswer;
 $("restartBtn").addEventListener("click",()=>{activeSession=session();events=[];render();$("submitBtn").onclick=checkAnswer;});
 render();
 </script>
