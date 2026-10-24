@@ -18,8 +18,16 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
+function deepFreeze(value) {
+  if (value && typeof value === "object" && !Object.isFrozen(value)) {
+    Object.freeze(value);
+    for (const child of Object.values(value)) deepFreeze(child);
+  }
+  return value;
+}
+
 function normalizeEvent(event) {
-  return Object.freeze(clone(event));
+  return deepFreeze(clone(event));
 }
 
 /** Append a new event without modifying any previously recorded event. */
@@ -120,6 +128,9 @@ export function submitAnswer({ events = [], session, task, response, correct, du
   assert(stateBefore.phase === task.phase, "task phase does not match current learning phase");
   if (safety === SAFETY.UNSAFE) {
     return { events, state: stateBefore, decision: { action: "CLOSE_SESSION", reason: "SAFETY_BLOCK", task: null } };
+  }
+  if (safety === SAFETY.CAUTION) {
+    return { events, state: stateBefore, decision: { action: "REDUCE_LOAD", reason: "SAFETY_CAUTION", task: null } };
   }
 
   const withAnswer = appendEvent(events, {
