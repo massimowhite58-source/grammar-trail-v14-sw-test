@@ -3,7 +3,10 @@
 ## Status
 - **Implemented:** pure deterministic learning-cycle module in `learning-core.mjs`.
 - **Implemented:** isolated browser laboratory at `../core-demo.html`.
-- **Tested:** Node.js built-in test suite; 9 tests passed on 2026-10-24.
+- **Implemented:** `content-runtime.mjs` — approval/version checks, validated content package, exact-version local fallback, and non-blocking operational events.
+- **Implemented:** `task-runtime.mjs` — delivery Quality Gate for approved content, version/phase/hypothesis consistency, mandatory User State, safety block, and premature-MIX prevention.
+- **Tested:** 8 Content Runtime tests and 8 Task Runtime tests, in addition to 9 learning-core tests.
+- **Tested:** Node.js built-in test suite; 25 tests passed on 2026-10-24 across the learning core, Content Runtime, and Task Runtime.
 - **Not yet integrated:** main Grammar Trail learning UI and existing progress model.
 - **Not yet production-ready:** persistence adapter, event migration/sync, full User State runtime, evidence calibration, review scheduling, Knowledge Map gating, accessibility QA, and release hardening.
 - **AI:** intentionally not connected in this update.
@@ -25,11 +28,15 @@ One active Knowledge Item and one main hypothesis per task. The phase advances o
 
 ## Files
 - `learning-core.mjs` — deterministic state reconstruction, decision and answer-processing functions.
-- `learning-core.test.mjs` — invariant tests runnable with `node --test core/learning-core.test.mjs`.
+- `learning-core.test.mjs` — core invariants.
+- `content-runtime.mjs` / `content-runtime.test.mjs` — content resolution, eligibility, fallback, and observability.
+- `task-runtime.mjs` / `task-runtime.test.mjs` — delivery Quality Gate.
 - `../core-demo.html` — isolated browser exercise for manual end-to-end checks.
 
+Run all suites with: `node --test core/learning-core.test.mjs core/content-runtime.test.mjs core/task-runtime.test.mjs`.
+
 ## Next
-1. Browser-test the Core Lab on mobile and desktop.
-2. Formalize event types and persistence boundary against Data Model v1.1.
-3. Add task/evaluator contracts and recovery quality tests.
-4. Integrate into the main UI only after those contracts and tests are stable.
+1. Formalize the event/evidence contract and persistence boundary against Data Model v1.1.
+2. Implement Answer Processing and Recovery as separate versioned modules.
+3. Add integration tests across Content Runtime → Task Runtime → Learning Core.
+4. Design durable event storage and state reconstruction before connecting the main UI.
