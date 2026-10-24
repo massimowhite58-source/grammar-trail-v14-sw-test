@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#000080">
+<title>Grammar Trail — Core Lab v0.1</title>
+<style>
+:root{color-scheme:light;--navy:#000080;--blue:#8080ff;--paper:#f7f8fc;--ink:#16172c;--muted:#62647d;--line:#dfe2f0;--peach:#f2c9b3}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+header{background:var(--navy);color:#fff;padding:22px 18px}header .inner,main{max-width:760px;margin:auto}header small{opacity:.8;letter-spacing:.08em;text-transform:uppercase}h1{font-size:clamp(1.45rem,4vw,2rem);margin:.2rem 0}header p{margin:.25rem 0 0;color:#fff;opacity:.9}
+main{padding:22px 16px 48px}.notice{border:1px solid #e5c5b1;background:#fff8f3;border-radius:14px;padding:12px 14px;font-size:.92rem;margin-bottom:16px}
+.card{background:white;border:1px solid var(--line);border-radius:20px;padding:clamp(18px,4vw,30px);box-shadow:0 8px 28px #11113a0b}
+.pill{display:inline-block;border-radius:999px;padding:5px 11px;background:#ececff;color:var(--navy);font-weight:700;font-size:.82rem}
+h2{font-size:1.3rem;margin:.8rem 0 .3rem}#prompt{font-size:1.12rem;margin:14px 0 20px}.answers{display:grid;gap:10px}
+button,input{font:inherit}button{cursor:pointer;border-radius:13px;min-height:50px;padding:12px 16px;border:1px solid #d5d7e9;background:white;color:var(--ink);text-align:left}
+button:hover{border-color:var(--blue)}button:focus-visible,input:focus-visible{outline:3px solid #8080ff66;outline-offset:2px}
+button.primary{background:var(--navy);color:#fff;border-color:var(--navy);font-weight:700;text-align:center;width:100%;margin-top:14px}
+button.choice[aria-pressed="true"]{border:2px solid var(--navy);background:#f0f0ff}
+input{width:100%;padding:13px;border:1px solid #bfc3da;border-radius:12px}
+.meta{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;color:var(--muted);font-size:.88rem;margin:16px 0 0}
+.progress{height:7px;background:#e5e6f2;border-radius:99px;overflow:hidden;margin:16px 0}.progress span{display:block;height:100%;width:0;background:var(--blue);transition:width .2s}
+.feedback{margin-top:14px;padding:12px;border-radius:12px;background:#f2f3fb}.feedback.good{background:#eaf7ed}.feedback.bad{background:#fff1e9}
+details{margin-top:16px;border-top:1px solid var(--line);padding-top:12px}summary{cursor:pointer;font-weight:700}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:.78rem;color:var(--muted)}
+footer{max-width:760px;margin:auto;padding:0 16px 32px;color:var(--muted);font-size:.86rem}
+@media(min-width:700px){main{padding-top:30px}.answers{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<header><div class="inner"><small>Grammar Trail · Internal prototype</small><h1>Core Lab — цикл обучения</h1><p>Детерминированное ядро без ИИ и облачных вызовов</p></div></header>
+<main>
+<div class="notice"><strong>Тестовый стенд.</strong> Это отдельная лабораторная страница, не подключённая к основному прогрессу. История хранится только в памяти этой вкладки и исчезнет при перезагрузке. Не используйте реальные персональные данные.</div>
+<section class="card" aria-live="polite">
+<div class="pill" id="phasePill">Этап 1 из 4 · NEW</div>
+<div class="progress"><span id="progressBar"></span></div>
+<h2 id="phaseTitle">Знакомимся с правилом</h2>
+<p id="prompt"></p>
+<div id="answerArea" class="answers"></div>
+<div id="feedback" class="feedback" hidden></div>
+<button id="submitBtn" class="primary" type="button">Проверить ответ</button>
+<div class="meta"><span id="attempts">Попыток: 0</span><span id="eventCount">Событий в истории: 0</span></div>
+<details><summary>Показать журнал событий (технический)</summary><pre id="eventLog">Пока событий нет.</pre></details>
+</section>
+<div style="margin-top:14px"><button id="restartBtn" type="button" style="width:100%;text-align:center">Начать тест заново</button></div>
+</main>
+<footer>Core v0.1 · One task = one hypothesis · Safety before learning value · Event history is append-only</footer>
+<script type="module">
+import { createSession, decideNextAction, submitAnswer, validateEventStream, SAFETY, PHASES } from "./core/learning-core.mjs";
+
+const contentVersion = "gt-core-demo-1";
+const knowledgeItemId = "present-simple-third-person-s";
+const hypothesisId = "verb-form-third-person-singular";
+const session = () => createSession({ sessionId: "core-lab-" + Date.now(), knowledgeItemId, contentVersion });
+const taskBank = [
+ {taskId:"t-new",knowledgeItemId,hypothesisId,phase:"NEW",approvalState:"APPROVED",contentVersion,prompt:"Какое предложение описывает регулярное действие?",kind:"choice",options:["She is working now.","She works every day.","She worked yesterday."],correctIndex:1,explain:"Every day обозначает привычное действие; для he/she/it в Present Simple используется форма works."},
+ {taskId:"t-understand",knowledgeItemId,hypothesisId,phase:"UNDERSTAND",approvalState:"APPROVED",contentVersion,prompt:"Почему в предложении “She works every day” стоит works?",kind:"choice",options:["Потому что подлежащее she — третье лицо единственного числа.","Потому что every day требует Past Simple.","Потому что works обозначает действие прямо сейчас."],correctIndex:0,explain:"В утвердительном Present Simple с he/she/it к смысловому глаголу обычно добавляется -s или -es."},
+ {taskId:"t-recall",knowledgeItemId,hypothesisId,phase:"RECALL",approvalState:"APPROVED",contentVersion,prompt:"Вспомни форму глагола без вариантов: “He ___ (watch) TV every evening.”",kind:"text",accepted:["watches"],explain:"Watch оканчивается на -ch, поэтому в форме he/she/it добавляется -es: watches."},
+ {taskId:"t-use",knowledgeItemId,hypothesisId,phase:"USE",approvalState:"APPROVED",contentVersion,prompt:"Выбери грамматически правильную фразу для описания привычки.",kind:"choice",options:["My brother play tennis on Sundays.","My brother plays tennis on Sundays.","My brother is play tennis on Sundays."],correctIndex:1,explain:"My brother = he; для регулярного действия в Present Simple нужна форма plays."}
+];
+
+let activeSession = session();
+let events = [];
+let selected = null;
+let answered = false;
+
+const $ = (id) => document.getElementById(id);
+function currentTask() {
+  const decision = decideNextAction({events,session:activeSession,safety:SAFETY.SAFE,taskBank});
+  return decision.task;
+}
+function render() {
+  const stateEvents = events;
+  const decision = decideNextAction({events:stateEvents,session:activeSession,safety:SAFETY.SAFE,taskBank});
+  const task = decision.task;
+  const completed = stateEvents.filter(e=>e.type==="PHASE_COMPLETED").length;
+  $("progressBar").style.width = (completed/4*100)+"%";
+  $("eventCount").textContent = "Событий в истории: "+events.length;
+  $("attempts").textContent = "Попыток: "+events.filter(e=>e.type==="ANSWER_SUBMITTED").length;
+  $("eventLog").textContent = events.length ? JSON.stringify(events,null,2) : "Пока событий нет.";
+  $("answerArea").replaceChildren();
+  $("feedback").hidden = true;
+  $("submitBtn").disabled = false;
+  $("submitBtn").textContent = "Проверить ответ";
+  selected = null; answered = false;
+  if (!task) {
+    $("phasePill").textContent = "Цикл завершён";
+    $("phaseTitle").textContent = "Отлично! Цикл пройден";
+    $("prompt").textContent = "Ты прошёл четыре этапа: знакомство, понимание, самостоятельное вспоминание и применение. Это демонстрация цикла, а не окончательная модель удержания знаний.";
+    $("submitBtn").hidden = true;
+    return;
+  }
+  $("submitBtn").hidden = false;
+  const n = PHASES.indexOf(task.phase)+1;
+  $("phasePill").textContent = "Этап "+n+" из 4 · "+task.phase;
+  $("phaseTitle").textContent = ({NEW:"Знакомимся с правилом",UNDERSTAND:"Проверяем понимание",RECALL:"Вспоминаем самостоятельно",USE:"Применяем в контексте"})[task.phase];
+  $("prompt").textContent = task.prompt;
+  if(task.kind==="choice") {
+    task.options.forEach((option,index)=>{
+      const button=document.createElement("button");
+      button.type="button";button.className="choice";button.textContent=option;button.setAttribute("aria-pressed","false");
+      button.addEventListener("click",()=>{
+        if(answered)return;
+        selected=index;
+        [...$("answerArea").querySelectorAll("button")].forEach((b,i)=>b.setAttribute("aria-pressed",String(i===index)));
+      });
+      $("answerArea").append(button);
+    });
+  } else {
+    const input=document.createElement("input");input.id="freeAnswer";input.autocomplete="off";input.placeholder="Введи форму глагола";input.setAttribute("aria-label","Твой ответ");
+    input.addEventListener("input",()=>{selected=input.value.trim();});
+    $("answerArea").append(input);
+  }
+}
+function checkAnswer() {
+  if(answered)return;
+  const task=currentTask();
+  if(!task)return;
+  if(selected===null || selected==="") {
+    $("feedback").hidden=false;$("feedback").className="feedback bad";$("feedback").textContent="Сначала выбери или введи ответ.";return;
+  }
+  const correct=task.kind==="choice" ? selected===task.correctIndex : task.accepted.includes(String(selected).trim().toLowerCase());
+  const result=submitAnswer({events,session:activeSession,task,response:task.kind==="choice"?{selectedIndex:selected,selectedText:task.options[selected]}:{text:String(selected)},correct,durationMs:null,safety:SAFETY.SAFE});
+  events=result.events;answered=true;
+  const box=$("feedback");box.hidden=false;box.className="feedback "+(correct?"good":"bad");
+  box.textContent=(correct?"Верно! ":"Пока не совсем. ") + task.explain + (correct ? (result.state.phase==="COMPLETE"?" Цикл завершён.":" Переходим дальше.") : " Попробуй ещё раз: история ошибки сохранена, а этап не пропущен.");
+  $("submitBtn").textContent=correct?(result.state.phase==="COMPLETE"?"Цикл завершён":"Следующий этап"):"Повторить этот этап";
+  $("submitBtn").disabled=false;
+  $("eventCount").textContent="Событий в истории: "+events.length;
+  $("attempts").textContent="Попыток: "+events.filter(e=>e.type==="ANSWER_SUBMITTED").length;
+  $("eventLog").textContent=JSON.stringify(events,null,2);
+  $("progressBar").style.width=(events.filter(e=>e.type==="PHASE_COMPLETED").length/4*100)+"%";
+  $("submitBtn").onclick=()=>{
+    if(correct){render();$("submitBtn").onclick=checkAnswer;}
+    else {answered=false;selected=null;$("feedback").hidden=true;$("submitBtn").onclick=checkAnswer;renderKeepPhase();}
+  };
+}
+function renderKeepPhase() {
+  // Re-render the same current phase after a wrong answer; existing events remain intact.
+  const decision=decideNextAction({events,session:activeSession,safety:SAFETY.SAFE,taskBank});
+  const task=decision.task;if(!task)return render();
+  $("answerArea").replaceChildren();selected=null;
+  if(task.kind==="choice") task.options.forEach((option,index)=>{const b=document.createElement("button");b.type="button";b.className="choice";b.textContent=option;b.setAttribute("aria-pressed","false");b.addEventListener("click",()=>{selected=index;[...$("answerArea").querySelectorAll("button")].forEach((x,i)=>x.setAttribute("aria-pressed",String(i===index)));});$("answerArea").append(b);});
+  else {const i=document.createElement("input");i.id="freeAnswer";i.placeholder="Введи форму глагола";i.setAttribute("aria-label","Твой ответ");i.addEventListener("input",()=>selected=i.value.trim());$("answerArea").append(i);}
+}
+$("submitBtn").addEventListener("click",checkAnswer);
+$("restartBtn").addEventListener("click",()=>{activeSession=session();events=[];render();$("submitBtn").onclick=checkAnswer;});
+render();
+</script>
+</body>
+</html>
