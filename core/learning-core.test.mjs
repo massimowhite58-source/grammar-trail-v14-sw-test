@@ -83,3 +83,20 @@ test("phase mismatch is rejected", () => {
     events: [], session: session(), task: task("USE"), response: "x", correct: true
   }), /task phase does not match/);
 });
+
+
+test("caution safety state defers task execution without recording an answer", () => {
+  const result = submitAnswer({ events: [], session: session(), task: task("NEW"), response: "answer", correct: true, safety: SAFETY.CAUTION });
+  assert.equal(result.events.length, 0);
+  assert.equal(result.decision.action, "REDUCE_LOAD");
+});
+
+test("recorded event payload is deeply immutable", () => {
+  const response = { nested: { value: "original" } };
+  const result = submitAnswer({ events: [], session: session(), task: task("NEW"), response, correct: true });
+  const event = result.events.find(e => e.type === "ANSWER_SUBMITTED");
+  assert.equal(Object.isFrozen(event), true);
+  assert.equal(Object.isFrozen(event.response), true);
+  assert.equal(Object.isFrozen(event.response.nested), true);
+  assert.equal(event.response.nested.value, "original");
+});
