@@ -51,3 +51,11 @@ Indexes should be added only when required by tested query paths. Event ordering
 ## Acceptance gate
 
 Do not call the adapter durable/ready until browser tests prove data survives database close/reopen, event writes are atomic, conflicts are explicit, scoped reads do not leak data, failed reads/writes reject, and schema upgrades preserve existing records. Keep the in-memory test double as a separate fast unit-test implementation.
+
+## Core Lab reference baseline
+
+- User-provided interactive baseline: https://massimowhite58-source.github.io/grammar-trail-v14-sw-test/core-demo.html
+- Source file: `core-demo.html` on the repository default branch (`main`).
+- The demo imports the deterministic learning core and keeps its event history in the current page's JavaScript memory; reloading the page clears the demo session history.
+- This demo is a behavioral reference for the learning cycle, not a test of the IndexedDB adapter and not evidence of durable storage.
+- Keep persistence-adapter work isolated on `feat/persistence-adapter-test-double`; do not change the deployed demo or default branch as part of this persistence task.
