@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Grammar Trail — IndexedDB adapter smoke tests</title>
+  <style>
+    body { font: 16px/1.5 system-ui, sans-serif; max-width: 760px; margin: 2rem auto; padding: 0 1rem; color: #000080; }
+    li { margin: .5rem 0; } .pass { color: #176b36; } .fail { color: #b42318; }
+    pre { overflow-wrap: anywhere; white-space: pre-wrap; background: #f3f5ff; padding: 1rem; border-radius: .5rem; }
+  </style>
+</head>
+<body>
+  <h1>IndexedDB adapter — browser smoke tests</h1>
+  <p>This isolated test page writes only to a uniquely named test database. It does not connect to the app UI or production data.</p>
+  <p id="status">Running tests…</p>
+  <ol id="results"></ol>
+  <pre id="details"></pre>
+  <script type="module">
+    import { IndexedDBEventAdapter, PersistenceConflictError } from "./indexeddb-persistence-adapter.mjs";
+    const results = document.querySelector("#results");
+    const status = document.querySelector("#status");
+    const details = document.querySelector("#details");
+    const dbName = `grammar-trail-idb-smoke-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    let passed = 0; let failed = 0; const errors = [];
+    const assert = (condition, message) => { if (!condition) throw new Error(message); };
+    const equal = (actual, expected, message) => assert(JSON.stringify(actual) === JSON.stringify(expected), `${message}; got ${JSON.stringify(actual)}`);
+    const event = (eventId, overrides = {}) => ({
+      eventId, type: "ANSWER_SUBMITTED", occurredAt: "2026-10-27T10:00:00.000Z",
+      schemaVersion: 1, coreVersion: "0.1.0", userId: "user-a", deviceId: "device-a",
+      correct: true, response: { selectedIndex: 1 }, ...overrides
+    });
+    async function check(name, fn) {
+      const li = document.createElement("li");
+      try { await fn(); passed += 1; li.className = "pass"; li.textContent = `PASS — ${name}`; }
+      catch (error) { failed += 1; li.className = "fail"; li.textContent = `FAIL — ${name}: ${error.message}`; errors.push(`${name}: ${error.stack || error}`); }
+      results.append(li);
+    }
+    let adapter;
+    try {
+      adapter = await IndexedDBEventAdapter.open({ databaseName: dbName });
+      await check("append and exact read-back", async () => {
+        await adapter.appendEvents([event("evt-1")]);
+        equal(await adapter.getEventById("evt-1", { userId: "user-a" }), event("evt-1"), "event round-trip mismatch");
+      });
+      await check("exact duplicate is idempotent", async () => {
+        equal(await adapter.appendEvents([event("evt-1")]), { appended: 0, duplicates: 1 }, "duplicate result mismatch");
+      });
+      await check("same ID with changed payload conflicts", async () => {
+        let conflict = false;
+        try { await adapter.appendEvents([event("evt-1", { correct: false })]); }
+        catch (error) { conflict = error instanceof PersistenceConflictError && error.code === "EVENT_ID_CONTENT_CONFLICT"; }
+        assert(conflict, "expected explicit event ID conflict");
+        equal(await adapter.getEventById("evt-1", { userId: "user-a" }), event("evt-1"), "conflict overwrote original event");
+      });
+      await check("invalid batch writes no partial events", async () => {
+        let rejected = false;
+        try { await adapter.appendEvents([event("evt-2"), { eventId: "broken" }]); } catch { rejected = true; }
+        assert(rejected, "invalid batch should reject");
+        equal(await adapter.getEventById("evt-2", { userId: "user-a" }), null, "partial event was written");
+      });
+      await check("user/device scope is enforced", async () => {
+        await adapter.appendEvents([event("evt-user-b", { userId: "user-b", deviceId: "device-b" })]);
+        equal(await adapter.getEventById("evt-user-b", { userId: "user-a" }), null, "cross-user lookup leaked event");
+        equal((await adapter.readEvents({ userId: "user-a", deviceId: "device-a" })).map((x) => x.eventId), ["evt-1"], "scoped event list mismatch");
+      });
+      await check("deterministic ordering and cursor pagination", async () => {
+        await adapter.appendEvents([
+          event("evt-c", { occurredAt: "2026-10-27T12:00:00.000Z" }),
+          event("evt-b", { occurredAt: "2026-10-27T10:00:00.000Z" }),
+          event("evt-a", { occurredAt: "2026-10-27T10:00:00.000Z" })
+        ]);
+        const first = await adapter.readEvents({ userId: "user-a", limit: 2 });
+        equal(first.map((x) => x.eventId), ["evt-1", "evt-a"], "first page order mismatch");
+        const second = await adapter.readEvents({ userId: "user-a", limit: 2, cursor: first.at(-1).eventId });
+        equal(second.map((x) => x.eventId), ["evt-b", "evt-c"], "second page order mismatch");
+      });
+      await check("data survives close and reopen", async () => {
+        adapter.close();
+        adapter = await IndexedDBEventAdapter.open({ databaseName: dbName });
+        equal((await adapter.getEventById("evt-1", { userId: "user-a" })).eventId, "evt-1", "event missing after reopen");
+      });
+    } catch (error) {
+      failed += 1; errors.push(`Harness setup: ${error.stack || error}`);
+    } finally {
+      if (adapter) adapter.close();
+      await new Promise((resolve) => { const request = indexedDB.deleteDatabase(dbName); request.onsuccess = request.onerror = request.onblocked = () => resolve(); });
+    }
+    status.textContent = `${passed} passed · ${failed} failed`;
+    status.className = failed ? "fail" : "pass";
+    details.textContent = errors.length ? errors.join("\n\n") : "No errors.";
+  </script>
+</body>
+</html>
