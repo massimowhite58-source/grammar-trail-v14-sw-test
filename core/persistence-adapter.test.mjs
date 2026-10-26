@@ -90,11 +90,51 @@ test("deleting and rebuilding a snapshot does not change source events", async (
   const projector = (events) => ({ count: events.length, correct: events.filter((item) => item.correct).length });
   const original = await store.rebuildSnapshot("learning-state", projector, { userId: "user-1" });
   assert.deepEqual(original.state, { count: 2, correct: 1 });
-  assert.equal(await store.deleteSnapshot("learning-state"), true);
-  assert.equal(await store.readSnapshot("learning-state"), null);
+  assert.equal(await store.deleteSnapshot("learning-state", "user-1"), true);
+  assert.equal(await store.readSnapshot("learning-state", "user-1"), null);
   const rebuilt = await store.rebuildSnapshot("learning-state", projector, { userId: "user-1" });
   assert.deepEqual(rebuilt.state, original.state);
   assert.deepEqual((await store.readEvents({ userId: "user-1" })).map((item) => item.eventId), ["evt-1", "evt-2"]);
+});
+
+test("snapshots are isolated by user even when snapshot IDs match", async () => {
+  const store = new InMemoryPersistenceAdapter();
+  await store.appendEvents([
+    event("evt-user-a", { userId: "user-a", correct: true }),
+    event("evt-user-b", { userId: "user-b", correct: false })
+  ]);
+  await store.rebuildSnapshot("learning-state", (events) => ({ count: events.length, correct: events.filter((item) => item.correct).length }), { userId: "user-a" });
+  await store.rebuildSnapshot("learning-state", (events) => ({ count: events.length, correct: events.filter((item) => item.correct).length }), { userId: "user-b" });
+  assert.deepEqual((await store.readSnapshot("learning-state", "user-a")).state, { count: 1, correct: 1 });
+  assert.deepEqual((await store.readSnapshot("learning-state", "user-b")).state, { count: 1, correct: 0 });
+  await assert.rejects(store.readSnapshot("learning-state"), /SNAPSHOT_USER_ID_REQUIRED/);
+  assert.equal(await store.deleteSnapshot("learning-state", "user-a"), true);
+  assert.equal(await store.readSnapshot("learning-state", "user-a"), null);
+  assert.deepEqual((await store.readSnapshot("learning-state", "user-b")).state, { count: 1, correct: 0 });
+});
+
+test("failed event read aborts snapshot rebuild and never returns a partial snapshot", async () => {
+  const store = new InMemoryPersistenceAdapter();
+  await store.appendEvents([event("evt-1")]);
+  store.failNextOperation("readEvents", "STORAGE_UNAVAILABLE");
+  await assert.rejects(
+    store.rebuildSnapshot("learning-state", (events) => ({ count: events.length }), { userId: "user-1" }),
+    (error) => error instanceof PersistenceFailureError && error.code === "STORAGE_UNAVAILABLE"
+  );
+  assert.equal(await store.readSnapshot("learning-state", "user-1"), null);
+  const rebuilt = await store.rebuildSnapshot("learning-state", (events) => ({ count: events.length }), { userId: "user-1" });
+  assert.deepEqual(rebuilt.state, { count: 1 });
+});
+
+test("getEventById read failures are explicit rather than reported as missing events", async () => {
+  const store = new InMemoryPersistenceAdapter();
+  await store.appendEvents([event("evt-1")]);
+  store.failNextOperation("getEventById", "STORAGE_UNAVAILABLE");
+  await assert.rejects(
+    store.getEventById("evt-1", { userId: "user-1" }),
+    (error) => error instanceof PersistenceFailureError && error.operation === "getEventById"
+  );
+  assert.equal((await store.getEventById("evt-1", { userId: "user-1" })).eventId, "evt-1");
 });
 
 test("integrity verification passes for valid events and reports counts", async () => {
