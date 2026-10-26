@@ -111,9 +111,7 @@ test("integrated pipeline completes NEW → UNDERSTAND → RECALL → USE withou
     payload: { prompt: `Demonstration prompt for ${phase}`, choices: ["A", "B"] }
   }));
   const s = session();
-  const taskBank = items.map(({ taskId, knowledgeItemId, hypothesisId, phase, contentVersion, approvalState }) => ({
-    taskId, knowledgeItemId, hypothesisId, phase, contentVersion, approvalState
-  }));
+  const taskBank = items;
   let events = [];
 
   for (const phase of phases) {
