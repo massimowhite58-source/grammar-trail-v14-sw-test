@@ -30,6 +30,8 @@ Required fields:
 - `occurredAt`: timestamp when the fact occurred, not when it synced.
 - `schemaVersion`: version of the event envelope/payload schema.
 - `coreVersion`: deterministic engine version that emitted the event.
+- `userId`: required persistence scope for the learner whose history contains the event.
+- `deviceId`: required stable local-device identifier for the origin of the event.
 - `sessionId`: session identity where applicable.
 - `knowledgeItemId`: learning target where applicable.
 - `contentVersion`: exact content version used where applicable.
@@ -55,7 +57,8 @@ A User Fact is not a Learning Event. Updating a User Fact must not rewrite or de
 ## 5. Required adapter operations
 The future adapter must expose equivalent behavior, independent of its eventual technology:
 - `appendEvents(events)`: validate and append new events; never update or delete existing event IDs.
-- `readEvents(query)`: filter by optional user/device/session/target and time range; sort by `occurredAt` ascending then `eventId` ascending; support stable cursor pagination. The `from` bound is inclusive and `to` is exclusive. A cursor is the last event ID from the previous page and must be reused with the same query filters.
+- `readEvents(query)`: `userId` is mandatory; optionally filter by device/session/target and time range. Sort by `occurredAt` ascending then `eventId` ascending; support stable cursor pagination. The `from` bound is inclusive and `to` is exclusive. A cursor is the last event ID from the previous page and must be reused with the same query filters.
+- `getEventById(eventId, scope)`: require `scope.userId`, optionally constrain by `scope.deviceId`; out-of-scope events return not-found semantics.
 - `getEventById(eventId)`: retrieve one event for idempotency and conflict checks.
 - `mergeEvents(incomingEvents)`: union histories by stable event ID; exact duplicates are ignored, conflicting payloads with the same ID are reported and never silently overwritten.
 - `writeUserFact(fact)`, `readUserFact(userId, factId)`, `readUserFacts(userId)`: validate and manage mutable User Facts within user scope.
@@ -65,7 +68,7 @@ The future adapter must expose equivalent behavior, independent of its eventual 
 - `rebuildSnapshot(query)`: replay source events through a versioned projector and return a deterministic state projection.
 - `verifyIntegrity(query)`: detect missing required fields, duplicate IDs, invalid schema versions, and impossible/conflicting records.
 
-The test double implements only a subset of the future contract. It now supports deterministic in-memory query ordering and cursor pagination for tests, but durable storage, durable cursor semantics across concurrent writes, device-scoped isolation guarantees, sync, and distributed conflict resolution are not implemented.
+The test double implements only a subset of the future contract. It now requires user/device identity on persisted events and user scope on reads, and tests device filtering. These are adapter-level test guarantees only; durable storage, durable cursor semantics across concurrent writes, cryptographic/authorization guarantees, sync, and distributed conflict resolution are not implemented.
 
 ## 6. Write guarantees
 1. Validate the complete event batch before committing any event.
@@ -95,7 +98,7 @@ The test double implements only a subset of the future contract. It now supports
 - User Fact conflict resolution across devices is not specified yet and must not be silently inferred from the event merge rule.
 
 ## 9. Privacy and security boundary
-- The adapter accepts a user/device scope and must not mix records across users.
+- The adapter requires user and device scope on each persisted Learning Event. Event reads require user scope and may be narrowed to one device; they must not mix records across users or expose events outside the requested scope.
 - Do not store credentials, API keys, or secrets in learning event payloads.
 - Minimize personal data; User Facts require provenance and a clear lifecycle.
 - Export, deletion, retention, and account-removal policies must be defined before public release. Any legally required deletion process must be explicit and audited; it must not be confused with ordinary cache cleanup.
@@ -124,6 +127,7 @@ Never convert a persistence failure into silent success. If a learning response 
 - Delete/rebuild a snapshot and prove source events remain unchanged.
 - Merge two device event sets in either order and prove the union is identical.
 - Simulate quota/storage failure and prove the caller receives an explicit failure without partial event writes. (This is test-double fault injection, not a real browser quota test.)\n- Verify stable event ordering, scoped/time-range filtering, cursor pagination, and invalid cursor/limit rejection.
+- Reject events missing user/device scope; require user-scoped event reads and verify device filtering does not leak records.
 - Verify cache deletion does not affect learning events or User Facts.
 - Verify user/device scoping prevents cross-user reads or writes.
 - Verify User Facts retain provenance, validate confidence, and remain scoped to their user.
