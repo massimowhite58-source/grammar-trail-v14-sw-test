@@ -1,8 +1,9 @@
 /**
- * Grammar Trail — in-memory persistence adapter test double v0.1.
+ * Grammar Trail — in-memory persistence adapter test double v0.2.
  *
- * This is deliberately NOT durable storage and must not be wired into the UI.
- * It exercises the persistence contract before choosing IndexedDB or a backend.
+ * Deliberately NOT durable storage and must not be wired into the UI.
+ * Exercises separation between immutable Learning Events, mutable User Facts,
+ * disposable snapshots, and independently clearable versioned Content Cache.
  */
 const clone = (value) => value === undefined ? undefined : JSON.parse(JSON.stringify(value));
 
@@ -10,6 +11,10 @@ function canonical(value) {
   if (value === null || typeof value !== "object") return JSON.stringify(value);
   if (Array.isArray(value)) return "[" + value.map(canonical).join(",") + "]";
   return "{" + Object.keys(value).sort().map((key) => JSON.stringify(key) + ":" + canonical(value[key])).join(",") + "}";
+}
+
+function validDate(value) {
+  return typeof value === "string" && !Number.isNaN(Date.parse(value));
 }
 
 function validateEvent(event) {
@@ -20,7 +25,21 @@ function validateEvent(event) {
   if (typeof event.eventId !== "string" || typeof event.type !== "string") return "INVALID_EVENT_FIELD_TYPE";
   if (!Number.isInteger(event.schemaVersion) || event.schemaVersion < 1) return "INVALID_SCHEMA_VERSION";
   if (typeof event.coreVersion !== "string") return "INVALID_CORE_VERSION";
-  if (Number.isNaN(Date.parse(event.occurredAt))) return "INVALID_OCCURRED_AT";
+  if (!validDate(event.occurredAt)) return "INVALID_OCCURRED_AT";
+  return null;
+}
+
+function validateUserFact(fact) {
+  if (!fact || typeof fact !== "object" || Array.isArray(fact)) return "USER_FACT_MUST_BE_OBJECT";
+  for (const key of ["id", "userId", "type", "source", "createdAt", "updatedAt", "status"]) {
+    if (fact[key] === undefined || fact[key] === null || fact[key] === "") return "USER_FACT_REQUIRED_FIELD_MISSING:" + key;
+  }
+  if (typeof fact.id !== "string" || typeof fact.userId !== "string" ||
+      typeof fact.type !== "string" || typeof fact.source !== "string" ||
+      typeof fact.status !== "string") return "INVALID_USER_FACT_FIELD_TYPE";
+  if (!validDate(fact.createdAt) || !validDate(fact.updatedAt)) return "INVALID_USER_FACT_TIMESTAMP";
+  if (typeof fact.confidence !== "number" || fact.confidence < 0 || fact.confidence > 1) return "INVALID_USER_FACT_CONFIDENCE";
+  if (!Object.prototype.hasOwnProperty.call(fact, "value")) return "USER_FACT_VALUE_REQUIRED";
   return null;
 }
 
@@ -33,13 +52,23 @@ export class PersistenceConflictError extends Error {
   }
 }
 
+export class UserFactConflictError extends Error {
+  constructor(factId) {
+    super("USER_FACT_SCOPE_CONFLICT:" + factId);
+    this.name = "UserFactConflictError";
+    this.code = "USER_FACT_SCOPE_CONFLICT";
+    this.factId = factId;
+  }
+}
+
 export class InMemoryPersistenceAdapter {
   #events = new Map();
+  #userFacts = new Map();
   #snapshots = new Map();
+  #contentCache = new Map();
 
   async appendEvents(events) {
     if (!Array.isArray(events)) throw new TypeError("EVENT_BATCH_MUST_BE_ARRAY");
-    // Validate the entire batch and all ID collisions before mutating storage.
     const staged = new Map();
     for (const event of events) {
       const invalid = validateEvent(event);
@@ -68,8 +97,64 @@ export class InMemoryPersistenceAdapter {
   }
 
   async mergeEvents(events) {
-    // Same atomic and idempotent semantics as append; merge order never overwrites facts.
     return this.appendEvents(events);
+  }
+
+  /**
+   * User Facts are mutable user data, distinct from immutable Learning Events.
+   * A fact is addressed by (userId, id); changing owner is never an update.
+   */
+  async writeUserFact(fact) {
+    const invalid = validateUserFact(fact);
+    if (invalid) throw new TypeError(invalid);
+    const key = fact.userId + "::" + fact.id;
+    const existing = this.#userFacts.get(key);
+    if (existing && existing.userId !== fact.userId) throw new UserFactConflictError(fact.id);
+    this.#userFacts.set(key, clone(fact));
+    return { written: true, updated: Boolean(existing) };
+  }
+
+  async readUserFacts(userId) {
+    if (typeof userId !== "string" || !userId) throw new TypeError("USER_ID_REQUIRED");
+    return [...this.#userFacts.values()]
+      .filter((fact) => fact.userId === userId)
+      .map(clone);
+  }
+
+  async readUserFact(userId, factId) {
+    if (typeof userId !== "string" || !userId) throw new TypeError("USER_ID_REQUIRED");
+    const fact = this.#userFacts.get(userId + "::" + factId);
+    return fact ? clone(fact) : null;
+  }
+
+  /**
+   * Cache keys include package ID and version. Cache clear is deliberately
+   * unable to access events, User Facts, snapshots, or long-term history.
+   */
+  async writeContentCache(packageId, version, packageRecord) {
+    if (typeof packageId !== "string" || !packageId ||
+        typeof version !== "string" || !version) {
+      throw new TypeError("CONTENT_CACHE_ID_AND_VERSION_REQUIRED");
+    }
+    if (!packageRecord || typeof packageRecord !== "object" || Array.isArray(packageRecord)) {
+      throw new TypeError("CONTENT_CACHE_RECORD_MUST_BE_OBJECT");
+    }
+    if (packageRecord.approved !== true) throw new TypeError("CONTENT_CACHE_PACKAGE_NOT_APPROVED");
+    this.#contentCache.set(packageId + "::" + version, {
+      packageId, version, packageRecord: clone(packageRecord)
+    });
+    return { written: true };
+  }
+
+  async readContentCache(packageId, version) {
+    const record = this.#contentCache.get(packageId + "::" + version);
+    return record ? clone(record) : null;
+  }
+
+  async clearContentCache() {
+    const deleted = this.#contentCache.size;
+    this.#contentCache.clear();
+    return { deleted };
   }
 
   async readSnapshot(snapshotId) {
@@ -113,7 +198,17 @@ export class InMemoryPersistenceAdapter {
       }
       ids.add(id);
     }
-    return { valid: true, eventCount: ids.size, snapshotCount: this.#snapshots.size };
+    for (const fact of this.#userFacts.values()) {
+      const invalid = validateUserFact(fact);
+      if (invalid) return { valid: false, code: invalid, factId: fact.id };
+    }
+    return {
+      valid: true,
+      eventCount: ids.size,
+      userFactCount: this.#userFacts.size,
+      snapshotCount: this.#snapshots.size,
+      contentCacheCount: this.#contentCache.size
+    };
   }
 
   /** Test-only helper: snapshots are disposable; source events remain untouched. */
