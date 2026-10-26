@@ -58,17 +58,16 @@ A User Fact is not a Learning Event. Updating a User Fact must not rewrite or de
 The future adapter must expose equivalent behavior, independent of its eventual technology:
 - `appendEvents(events)`: validate and append new events; never update or delete existing event IDs.
 - `readEvents(query)`: `userId` is mandatory; optionally filter by device/session/target and time range. Sort by `occurredAt` ascending then `eventId` ascending; support stable cursor pagination. The `from` bound is inclusive and `to` is exclusive. A cursor is the last event ID from the previous page and must be reused with the same query filters.
-- `getEventById(eventId, scope)`: require `scope.userId`, optionally constrain by `scope.deviceId`; out-of-scope events return not-found semantics.
-- `getEventById(eventId)`: retrieve one event for idempotency and conflict checks.
+- `getEventById(eventId, scope)`: require `scope.userId`, optionally constrain by `scope.deviceId`; out-of-scope events return not-found semantics. Storage/read failures must throw an explicit error and must not be represented as a missing event. Event IDs are globally unique across users and devices; reusing an ID for different content is an explicit conflict.
 - `mergeEvents(incomingEvents)`: union histories by stable event ID; exact duplicates are ignored, conflicting payloads with the same ID are reported and never silently overwritten.
 - `writeUserFact(fact)`, `readUserFact(userId, factId)`, `readUserFacts(userId)`: validate and manage mutable User Facts within user scope.
 - `writeContentCache(packageId, version, packageRecord)`, `readContentCache(packageId, version)`, `clearContentCache()`: store approved versioned content separately and clear only that cache category.
-- `readSnapshot(snapshotKey)`: return a derived snapshot only if its source version/watermark is known.
-- `writeSnapshot(snapshot)`: replaceable cache operation; never changes or deletes source events.
-- `rebuildSnapshot(query)`: replay source events through a versioned projector and return a deterministic state projection.
+- `readSnapshot(snapshotId, userId)`: require user scope; snapshots are keyed by `(userId, snapshotId)` and must never be exposed across users.
+- `writeSnapshot(snapshotId, snapshot)`: require the snapshot owner `userId`; replaceable cache operation; never changes or deletes source events.
+- `rebuildSnapshot(snapshotId, projector, query)`: require `query.userId`, replay only events within that query scope through a versioned projector, and return a deterministic state projection. If reading events fails or is incomplete, rebuilding must fail explicitly and must not publish a partial snapshot.
 - `verifyIntegrity(query)`: detect missing required fields, duplicate IDs, invalid schema versions, and impossible/conflicting records.
 
-The test double implements only a subset of the future contract. It now requires user/device identity on persisted events and user scope on reads, and tests device filtering. These are adapter-level test guarantees only; durable storage, durable cursor semantics across concurrent writes, cryptographic/authorization guarantees, sync, and distributed conflict resolution are not implemented.
+The test double implements only a subset of the future contract. It requires user/device identity on persisted events and user scope on event reads; it tests device filtering, user-scoped snapshots, and explicit read failures during snapshot reconstruction. These are adapter-level test guarantees only; durable storage, durable cursor semantics across concurrent writes, cryptographic/authorization guarantees, sync, and distributed conflict resolution are not implemented.
 
 ## 6. Write guarantees
 1. Validate the complete event batch before committing any event.
@@ -129,6 +128,8 @@ Never convert a persistence failure into silent success. If a learning response 
 - Simulate quota/storage failure and prove the caller receives an explicit failure without partial event writes. (This is test-double fault injection, not a real browser quota test.)\n- Verify stable event ordering, scoped/time-range filtering, cursor pagination, and invalid cursor/limit rejection.
 - Reject events missing user/device scope; require user-scoped event reads and verify device filtering does not leak records.
 - Verify cache deletion does not affect learning events or User Facts.
+- Verify snapshots with the same ID are isolated by user and snapshot rebuild uses only that user’s events.
+- Verify failed event reads abort snapshot rebuild without publishing a partial snapshot; lookup failures must not be reported as missing events.
 - Verify user/device scoping prevents cross-user reads or writes.
 - Verify User Facts retain provenance, validate confidence, and remain scoped to their user.
 - Verify updating a User Fact does not rewrite historical Learning Events.
