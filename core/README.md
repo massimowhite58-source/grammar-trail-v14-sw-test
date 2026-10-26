@@ -9,7 +9,7 @@
 - **Design system:** `../GRAMMAR_TRAIL_DESIGN_SYSTEM.md` records Core Lab as the visual reference; question prompts now use navy, semibold 19.2 px text with increased line-height, and explanation text is larger and darker.
 - **Persistence boundary:** `PERSISTENCE_CONTRACT.md` defines immutable Learning Events, mutable scoped User Facts, independent approved/versioned Content Cache, rebuildable snapshots, and acceptance criteria.
 - **Persistence test double:** `persistence-adapter.mjs` provides in-memory event, User Fact, snapshot, and Content Cache operations for contract tests only. Cache cleanup is isolated from events and User Facts. It is not durable storage and is not connected to the UI.
-- **Persistence validation status:** expanded User Fact and Content Cache tests have been authored; their CI result is pending. Do not treat the new coverage as passed until GitHub Actions confirms it.
+- **Persistence validation:** GitHub Actions confirmed 52/52 tests passed on commit `5bb040335611f9399ddc9e8c6d5e05e4ffd193d7`, including the expanded User Fact and Content Cache cases. This validates the in-memory test double only; it does not validate durable storage or physical-device behavior.
 - **Tested:** 8 Content Runtime tests and 8 Task Runtime tests, in addition to 9 learning-core tests.
 - **Tested:** Node.js built-in unit suite; 34 tests passed on 2026-10-27 across the learning core, Content Runtime, Task Runtime, and Recovery Runtime.
 - **Integration coverage:** `integration.test.mjs` exercises the chain Content Runtime → Task Runtime → Learning Core → Recovery Runtime, including immutable event validation and fail-closed safety/version gates. Four integration tests are included; all 38 tests passed in the latest run.
