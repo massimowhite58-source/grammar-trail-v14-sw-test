@@ -167,7 +167,7 @@ export class IndexedDBEventAdapter {
         .filter((event) => query.knowledgeItemId === undefined || event.knowledgeItemId === query.knowledgeItemId)
         .filter((event) => query.from === undefined || Date.parse(event.occurredAt) >= Date.parse(query.from))
         .filter((event) => query.to === undefined || Date.parse(event.occurredAt) < Date.parse(query.to))
-        .sort((a, b) => Date.parse(a.occurredAt) - Date.parse(b.occurredAt) || a.eventId.localeCompare(b.eventId));
+        .sort((a, b) => Date.parse(a.occurredAt) - Date.parse(b.occurredAt) || (a.eventId < b.eventId ? -1 : a.eventId > b.eventId ? 1 : 0));
       if (query.cursor !== undefined) {
         const index = events.findIndex((event) => event.eventId === query.cursor);
         if (index < 0) throw new TypeError("INVALID_EVENT_CURSOR");
