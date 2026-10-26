@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { InMemoryPersistenceAdapter, PersistenceConflictError } from "./persistence-adapter.mjs";
+import { InMemoryPersistenceAdapter, PersistenceConflictError, PersistenceFailureError } from "./persistence-adapter.mjs";
 
 const event = (eventId, overrides = {}) => ({
   eventId,
@@ -160,4 +160,57 @@ test("User Fact validation rejects missing provenance and invalid confidence", a
   await assert.rejects(store.writeUserFact(userFact("fact-no-source", { source: "" })));
   await assert.rejects(store.writeUserFact(userFact("fact-bad-confidence", { confidence: 1.5 })));
   assert.deepEqual(await store.readUserFacts("user-1"), []);
+});
+
+
+test("readEvents has deterministic timestamp and eventId ordering with stable cursor pagination", async () => {
+  const store = new InMemoryPersistenceAdapter();
+  await store.appendEvents([
+    event("evt-c", { occurredAt: "2026-10-27T11:00:00.000Z" }),
+    event("evt-b", { occurredAt: "2026-10-27T10:00:00.000Z" }),
+    event("evt-a", { occurredAt: "2026-10-27T10:00:00.000Z" }),
+    event("evt-old", { occurredAt: "2026-10-27T08:00:00.000Z" })
+  ]);
+  const first = await store.readEvents({ limit: 2 });
+  assert.deepEqual(first.map((item) => item.eventId), ["evt-old", "evt-a"]);
+  const second = await store.readEvents({ limit: 2, cursor: first.at(-1).eventId });
+  assert.deepEqual(second.map((item) => item.eventId), ["evt-b", "evt-c"]);
+  assert.deepEqual([...first, ...second].map((item) => item.eventId), ["evt-old", "evt-a", "evt-b", "evt-c"]);
+});
+
+test("readEvents filters by scope and time range; upper time bound is exclusive", async () => {
+  const store = new InMemoryPersistenceAdapter();
+  await store.appendEvents([
+    event("evt-a", { userId: "user-a", deviceId: "device-1", occurredAt: "2026-10-27T09:00:00.000Z" }),
+    event("evt-b", { userId: "user-a", deviceId: "device-2", occurredAt: "2026-10-27T10:00:00.000Z" }),
+    event("evt-c", { userId: "user-b", deviceId: "device-1", occurredAt: "2026-10-27T10:30:00.000Z" })
+  ]);
+  const results = await store.readEvents({
+    userId: "user-a",
+    deviceId: "device-1",
+    from: "2026-10-27T09:00:00.000Z",
+    to: "2026-10-27T10:00:00.000Z"
+  });
+  assert.deepEqual(results.map((item) => item.eventId), ["evt-a"]);
+});
+
+test("readEvents rejects invalid pagination and cursors explicitly", async () => {
+  const store = new InMemoryPersistenceAdapter();
+  await store.appendEvents([event("evt-1")]);
+  await assert.rejects(store.readEvents({ limit: 0 }), /INVALID_EVENT_QUERY_LIMIT/);
+  await assert.rejects(store.readEvents({ cursor: "missing-event" }), /INVALID_EVENT_CURSOR/);
+  await assert.rejects(store.readEvents({ from: "2026-10-28T00:00:00.000Z", to: "2026-10-27T00:00:00.000Z" }), /INVALID_EVENT_QUERY_RANGE/);
+});
+
+test("simulated storage failure is explicit and event batch remains atomic", async () => {
+  const store = new InMemoryPersistenceAdapter();
+  store.failNextOperation("appendEvents", "STORAGE_QUOTA_EXCEEDED");
+  await assert.rejects(store.appendEvents([event("evt-a"), event("evt-b")]), (error) => {
+    assert.ok(error instanceof PersistenceFailureError);
+    assert.equal(error.code, "STORAGE_QUOTA_EXCEEDED");
+    assert.equal(error.operation, "appendEvents");
+    return true;
+  });
+  assert.deepEqual(await store.readEvents(), []);
+  assert.deepEqual(await store.appendEvents([event("evt-a")]), { appended: 1, duplicates: 0 });
 });
