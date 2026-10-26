@@ -9,7 +9,7 @@
 - **Design system:** `../GRAMMAR_TRAIL_DESIGN_SYSTEM.md` records Core Lab as the visual reference; Core Lab explanation text is now larger, darker, and easier to read.
 - **Tested:** 8 Content Runtime tests and 8 Task Runtime tests, in addition to 9 learning-core tests.
 - **Tested:** Node.js built-in unit suite; 34 tests passed on 2026-10-27 across the learning core, Content Runtime, Task Runtime, and Recovery Runtime.
-- **Integration coverage:** `integration.test.mjs` exercises the chain Content Runtime → Task Runtime → Learning Core → Recovery Runtime, including immutable event validation and fail-closed safety/version gates. Four integration tests are included.
+- **Integration coverage:** `integration.test.mjs` exercises the chain Content Runtime → Task Runtime → Learning Core → Recovery Runtime, including immutable event validation and fail-closed safety/version gates. Four integration tests are included; all 38 tests passed in the latest run.
 - **Not yet integrated:** main Grammar Trail learning UI and existing progress model.
 - **Not yet production-ready:** persistence adapter, event migration/sync, full User State runtime, evidence calibration, review scheduling, Knowledge Map gating, accessibility QA, and release hardening.
 - **AI:** intentionally not connected in this update.
