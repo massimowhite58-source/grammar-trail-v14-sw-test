@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { resolveContent } from "./content-runtime.mjs";
 import { validateTaskForDelivery } from "./task-runtime.mjs";
-import { createSession, submitAnswer, validateEventStream } from "./learning-core.mjs";
+import { createSession, decideNextAction, submitAnswer, validateEventStream } from "./learning-core.mjs";
 import { planRecovery } from "./recovery-runtime.mjs";
 
 const item = (overrides = {}) => ({
@@ -102,3 +102,62 @@ test("approval and version mismatches are blocked before the Learning Core", () 
   });
   assert.equal(mismatch.code, "CONTENT_VERSION_MISMATCH");
 });
+
+test("integrated pipeline completes NEW → UNDERSTAND → RECALL → USE without changing the target", () => {
+  const phases = ["NEW", "UNDERSTAND", "RECALL", "USE"];
+  const items = phases.map((phase, index) => item({
+    taskId: `task-${phase.toLowerCase()}`,
+    phase,
+    payload: { prompt: `Demonstration prompt for ${phase}`, choices: ["A", "B"] }
+  }));
+  const s = session();
+  const taskBank = items.map(({ taskId, knowledgeItemId, hypothesisId, phase, contentVersion, approvalState }) => ({
+    taskId, knowledgeItemId, hypothesisId, phase, contentVersion, approvalState
+  }));
+  let events = [];
+
+  for (const phase of phases) {
+    const decision = (awaitableDecideNextAction)(events, s, taskBank);
+    assert.equal(decision.action, phase);
+    assert.equal(decision.task.phase, phase);
+
+    const resolved = resolveContent(request(items, { phase }));
+    assert.equal(resolved.status, "READY");
+    assert.equal(resolved.package.task.taskId, decision.task.taskId);
+
+    const gate = validateTaskForDelivery({
+      selectedTask: decision.task,
+      contentPackage: resolved.package,
+      userState: userState(),
+      expectedContentVersion: "content-v1",
+      expectedPhase: phase,
+      allowedHypothesisIds: ["hyp-third-person-s"]
+    });
+    assert.equal(gate.status, "READY");
+
+    const result = submitAnswer({
+      events,
+      session: s,
+      task: gate.task,
+      response: { selectedIndex: 1, selectedText: "B" },
+      correct: true,
+      safety: "SAFE"
+    });
+    events = result.events;
+    assert.equal(result.state.lastCompletedPhase, phase);
+    assert.equal(events.every(event => event.knowledgeItemId === "ki-present-simple"), true);
+    assert.equal(events.every(event => event.hypothesisId === undefined || event.hypothesisId === "hyp-third-person-s"), true);
+  }
+
+  const finalDecision = (awaitableDecideNextAction)(events, s, taskBank);
+  assert.equal(finalDecision.action, "STABILIZE");
+  assert.equal(finalDecision.reason, "CYCLE_COMPLETE");
+  assert.equal(events.filter(event => event.type === "ANSWER_SUBMITTED").length, 4);
+  assert.equal(events.filter(event => event.type === "PHASE_COMPLETED").length, 4);
+  assert.equal(validateEventStream(events).valid, true);
+});
+
+// Keep the integration test explicit: it calls the real deterministic decision engine.
+function awaitableDecideNextAction(events, sessionValue, taskBank) {
+  return decideNextAction({ events, session: sessionValue, safety: "SAFE", taskBank });
+}
