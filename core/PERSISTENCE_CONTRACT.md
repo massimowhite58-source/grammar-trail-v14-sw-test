@@ -55,7 +55,7 @@ A User Fact is not a Learning Event. Updating a User Fact must not rewrite or de
 ## 5. Required adapter operations
 The future adapter must expose equivalent behavior, independent of its eventual technology:
 - `appendEvents(events)`: validate and append new events; never update or delete existing event IDs.
-- `readEvents(query)`: return events by user/session/target/time range with stable pagination.
+- `readEvents(query)`: filter by optional user/device/session/target and time range; sort by `occurredAt` ascending then `eventId` ascending; support stable cursor pagination. The `from` bound is inclusive and `to` is exclusive. A cursor is the last event ID from the previous page and must be reused with the same query filters.
 - `getEventById(eventId)`: retrieve one event for idempotency and conflict checks.
 - `mergeEvents(incomingEvents)`: union histories by stable event ID; exact duplicates are ignored, conflicting payloads with the same ID are reported and never silently overwritten.
 - `writeUserFact(fact)`, `readUserFact(userId, factId)`, `readUserFacts(userId)`: validate and manage mutable User Facts within user scope.
@@ -65,7 +65,7 @@ The future adapter must expose equivalent behavior, independent of its eventual 
 - `rebuildSnapshot(query)`: replay source events through a versioned projector and return a deterministic state projection.
 - `verifyIntegrity(query)`: detect missing required fields, duplicate IDs, invalid schema versions, and impossible/conflicting records.
 
-The test double implements only a subset of the future contract. In particular, durable storage, query pagination, device-scoped event isolation, sync, and distributed conflict resolution are not implemented.
+The test double implements only a subset of the future contract. It now supports deterministic in-memory query ordering and cursor pagination for tests, but durable storage, durable cursor semantics across concurrent writes, device-scoped isolation guarantees, sync, and distributed conflict resolution are not implemented.
 
 ## 6. Write guarantees
 1. Validate the complete event batch before committing any event.
@@ -123,7 +123,7 @@ Never convert a persistence failure into silent success. If a learning response 
 - Rebuild a snapshot from events and compare deterministic output.
 - Delete/rebuild a snapshot and prove source events remain unchanged.
 - Merge two device event sets in either order and prove the union is identical.
-- Simulate quota/storage failure and prove the caller receives an explicit failure.
+- Simulate quota/storage failure and prove the caller receives an explicit failure without partial event writes. (This is test-double fault injection, not a real browser quota test.)\n- Verify stable event ordering, scoped/time-range filtering, cursor pagination, and invalid cursor/limit rejection.
 - Verify cache deletion does not affect learning events or User Facts.
 - Verify user/device scoping prevents cross-user reads or writes.
 - Verify User Facts retain provenance, validate confidence, and remain scoped to their user.
