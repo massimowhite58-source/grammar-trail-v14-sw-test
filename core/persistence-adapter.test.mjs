@@ -173,9 +173,9 @@ test("readEvents has deterministic timestamp and eventId ordering with stable cu
     event("evt-a", { occurredAt: "2026-10-27T10:00:00.000Z" }),
     event("evt-old", { occurredAt: "2026-10-27T08:00:00.000Z" })
   ]);
-  const first = await store.readEvents({ limit: 2 });
+  const first = await store.readEvents({ userId: "user-1", limit: 2 });
   assert.deepEqual(first.map((item) => item.eventId), ["evt-old", "evt-a"]);
-  const second = await store.readEvents({ limit: 2, cursor: first.at(-1).eventId });
+  const second = await store.readEvents({ userId: "user-1", limit: 2, cursor: first.at(-1).eventId });
   assert.deepEqual(second.map((item) => item.eventId), ["evt-b", "evt-c"]);
   assert.deepEqual([...first, ...second].map((item) => item.eventId), ["evt-old", "evt-a", "evt-b", "evt-c"]);
 });
@@ -199,9 +199,9 @@ test("readEvents filters by scope and time range; upper time bound is exclusive"
 test("readEvents rejects invalid pagination and cursors explicitly", async () => {
   const store = new InMemoryPersistenceAdapter();
   await store.appendEvents([event("evt-1")]);
-  await assert.rejects(store.readEvents({ limit: 0 }), /INVALID_EVENT_QUERY_LIMIT/);
-  await assert.rejects(store.readEvents({ cursor: "missing-event" }), /INVALID_EVENT_CURSOR/);
-  await assert.rejects(store.readEvents({ from: "2026-10-28T00:00:00.000Z", to: "2026-10-27T00:00:00.000Z" }), /INVALID_EVENT_QUERY_RANGE/);
+  await assert.rejects(store.readEvents({ userId: "user-1", limit: 0 }), /INVALID_EVENT_QUERY_LIMIT/);
+  await assert.rejects(store.readEvents({ userId: "user-1", cursor: "missing-event" }), /INVALID_EVENT_CURSOR/);
+  await assert.rejects(store.readEvents({ userId: "user-1", from: "2026-10-28T00:00:00.000Z", to: "2026-10-27T00:00:00.000Z" }), /INVALID_EVENT_QUERY_RANGE/);
 });
 
 test("simulated storage failure is explicit and event batch remains atomic", async () => {
