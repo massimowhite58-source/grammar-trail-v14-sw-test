@@ -1,4 +1,3 @@
-# Grammar Trail — Core Lab integration tests v0.1
 import test from "node:test";
 import assert from "node:assert/strict";
 import { resolveContent } from "./content-runtime.mjs";
