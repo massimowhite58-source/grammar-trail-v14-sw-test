@@ -19,10 +19,12 @@ function validDate(value) {
 
 function validateEvent(event) {
   if (!event || typeof event !== "object" || Array.isArray(event)) return "EVENT_MUST_BE_OBJECT";
-  for (const key of ["eventId", "type", "occurredAt", "schemaVersion", "coreVersion"]) {
+  for (const key of ["eventId", "type", "occurredAt", "schemaVersion", "coreVersion", "userId", "deviceId"]) {
     if (event[key] === undefined || event[key] === null || event[key] === "") return "REQUIRED_FIELD_MISSING:" + key;
   }
-  if (typeof event.eventId !== "string" || typeof event.type !== "string") return "INVALID_EVENT_FIELD_TYPE";
+  if (typeof event.eventId !== "string" || typeof event.type !== "string" ||
+      typeof event.userId !== "string" || !event.userId ||
+      typeof event.deviceId !== "string" || !event.deviceId) return "INVALID_EVENT_FIELD_TYPE";
   if (!Number.isInteger(event.schemaVersion) || event.schemaVersion < 1) return "INVALID_SCHEMA_VERSION";
   if (typeof event.coreVersion !== "string") return "INVALID_CORE_VERSION";
   if (!validDate(event.occurredAt)) return "INVALID_OCCURRED_AT";
@@ -118,8 +120,12 @@ export class InMemoryPersistenceAdapter {
    * the last item returned by the previous page for the same query.
    */
   async readEvents(query = {}) {
+    this.#throwInjectedFailure("readEvents");
     if (!query || typeof query !== "object" || Array.isArray(query)) {
       throw new TypeError("EVENT_QUERY_MUST_BE_OBJECT");
+    }
+    if (typeof query.userId !== "string" || !query.userId) {
+      throw new TypeError("EVENT_QUERY_USER_ID_REQUIRED");
     }
     for (const key of ["userId", "deviceId", "sessionId", "knowledgeItemId", "from", "to", "cursor"]) {
       if (query[key] !== undefined && (typeof query[key] !== "string" || !query[key])) {
@@ -157,9 +163,15 @@ export class InMemoryPersistenceAdapter {
     return events.map(clone);
   }
 
-  async getEventById(eventId) {
+  async getEventById(eventId, scope = {}) {
+    if (typeof scope.userId !== "string" || !scope.userId) throw new TypeError("EVENT_QUERY_USER_ID_REQUIRED");
+    if (scope.deviceId !== undefined && (typeof scope.deviceId !== "string" || !scope.deviceId)) {
+      throw new TypeError("INVALID_EVENT_QUERY_FIELD:deviceId");
+    }
     const record = this.#events.get(eventId);
-    return record ? clone(record.event) : null;
+    if (!record || record.event.userId !== scope.userId ||
+        (scope.deviceId !== undefined && record.event.deviceId !== scope.deviceId)) return null;
+    return clone(record.event);
   }
 
   async mergeEvents(events) {
@@ -236,9 +248,12 @@ export class InMemoryPersistenceAdapter {
     return { written: true };
   }
 
-  async rebuildSnapshot(snapshotId, projector) {
+  async rebuildSnapshot(snapshotId, projector, query) {
     if (typeof projector !== "function") throw new TypeError("PROJECTOR_REQUIRED");
-    const events = await this.readEvents();
+    if (!query || typeof query !== "object" || typeof query.userId !== "string" || !query.userId) {
+      throw new TypeError("SNAPSHOT_QUERY_USER_ID_REQUIRED");
+    }
+    const events = await this.readEvents(query);
     const projected = await projector(events);
     const snapshot = {
       snapshotId,
