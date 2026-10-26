@@ -7,8 +7,9 @@
 - **Implemented:** `task-runtime.mjs` — delivery Quality Gate for approved content, version/phase/hypothesis consistency, mandatory User State, safety block, and premature-MIX prevention.
 - **Implemented:** `recovery-runtime.mjs` — bounded, deterministic recovery ladder that preserves the target, never edits correctness/history, blocks unsafe states, and can recommend a pause instead of escalating forever.
 - **Design system:** `../GRAMMAR_TRAIL_DESIGN_SYSTEM.md` records Core Lab as the visual reference; question prompts now use navy, semibold 19.2 px text with increased line-height, and explanation text is larger and darker.
-- **Persistence boundary:** `PERSISTENCE_CONTRACT.md` defines append-only events, idempotent merges, rebuildable snapshots, explicit failure behavior, and acceptance tests.
-- **Persistence test double:** `persistence-adapter.mjs` provides an in-memory reference implementation for contract tests only. It is not durable storage and is not connected to the UI.
+- **Persistence boundary:** `PERSISTENCE_CONTRACT.md` defines immutable Learning Events, mutable scoped User Facts, independent approved/versioned Content Cache, rebuildable snapshots, and acceptance criteria.
+- **Persistence test double:** `persistence-adapter.mjs` provides in-memory event, User Fact, snapshot, and Content Cache operations for contract tests only. Cache cleanup is isolated from events and User Facts. It is not durable storage and is not connected to the UI.
+- **Persistence validation status:** expanded User Fact and Content Cache tests have been authored; their CI result is pending. Do not treat the new coverage as passed until GitHub Actions confirms it.
 - **Tested:** 8 Content Runtime tests and 8 Task Runtime tests, in addition to 9 learning-core tests.
 - **Tested:** Node.js built-in unit suite; 34 tests passed on 2026-10-27 across the learning core, Content Runtime, Task Runtime, and Recovery Runtime.
 - **Integration coverage:** `integration.test.mjs` exercises the chain Content Runtime → Task Runtime → Learning Core → Recovery Runtime, including immutable event validation and fail-closed safety/version gates. Four integration tests are included; all 38 tests passed in the latest run.
@@ -46,6 +47,7 @@ Run all suites with: `node --test core/learning-core.test.mjs core/content-runti
 
 ## Next
 1. Run the expanded Node.js test command, including `persistence-adapter.test.mjs`.
-2. Review adapter semantics against Data Model v1.1 and add explicit User Facts isolation tests.
-3. Only after the contract tests are stable, choose and implement the smallest local durable adapter.
-4. Integrate into the main UI only after durable-storage tests are stable.
+2. Inspect the CI result for the expanded User Facts and Content Cache tests.
+3. Address any failures, then review remaining gaps: storage/quota failure simulation, stable event ordering/pagination, and device scope.
+4. Only after the contract tests are stable, choose and implement the smallest local durable adapter.
+5. Integrate into the main UI only after durable-storage tests are stable.
