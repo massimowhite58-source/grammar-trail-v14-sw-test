@@ -164,6 +164,7 @@ export class InMemoryPersistenceAdapter {
   }
 
   async getEventById(eventId, scope = {}) {
+    this.#throwInjectedFailure("getEventById");
     if (typeof scope.userId !== "string" || !scope.userId) throw new TypeError("EVENT_QUERY_USER_ID_REQUIRED");
     if (scope.deviceId !== undefined && (typeof scope.deviceId !== "string" || !scope.deviceId)) {
       throw new TypeError("INVALID_EVENT_QUERY_FIELD:deviceId");
@@ -235,8 +236,9 @@ export class InMemoryPersistenceAdapter {
     return { deleted };
   }
 
-  async readSnapshot(snapshotId) {
-    return clone(this.#snapshots.get(snapshotId) ?? null);
+  async readSnapshot(snapshotId, userId) {
+    if (typeof userId !== "string" || !userId) throw new TypeError("SNAPSHOT_USER_ID_REQUIRED");
+    return clone(this.#snapshots.get(userId + "::" + snapshotId) ?? null);
   }
 
   async writeSnapshot(snapshotId, snapshot) {
@@ -244,7 +246,8 @@ export class InMemoryPersistenceAdapter {
     if (!snapshot || typeof snapshot !== "object" || Array.isArray(snapshot)) {
       throw new TypeError("SNAPSHOT_MUST_BE_OBJECT");
     }
-    this.#snapshots.set(snapshotId, clone(snapshot));
+    if (typeof snapshot.userId !== "string" || !snapshot.userId) throw new TypeError("SNAPSHOT_USER_ID_REQUIRED");
+    this.#snapshots.set(snapshot.userId + "::" + snapshotId, clone(snapshot));
     return { written: true };
   }
 
@@ -257,6 +260,7 @@ export class InMemoryPersistenceAdapter {
     const projected = await projector(events);
     const snapshot = {
       snapshotId,
+      userId: query.userId,
       projectorVersion: "test-double-v1",
       sourceEventCount: events.length,
       sourceEventIds: events.map((event) => event.eventId),
@@ -293,7 +297,8 @@ export class InMemoryPersistenceAdapter {
   }
 
   /** Test-only helper: snapshots are disposable; source events remain untouched. */
-  async deleteSnapshot(snapshotId) {
-    return this.#snapshots.delete(snapshotId);
+  async deleteSnapshot(snapshotId, userId) {
+    if (typeof userId !== "string" || !userId) throw new TypeError("SNAPSHOT_USER_ID_REQUIRED");
+    return this.#snapshots.delete(userId + "::" + snapshotId);
   }
 }
