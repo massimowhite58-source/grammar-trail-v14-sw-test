@@ -220,8 +220,8 @@ test("simulated storage failure is explicit and event batch remains atomic", asy
 
 test("persistence requires user and device scope on every Learning Event", async () => {
   const store = new InMemoryPersistenceAdapter();
-  await assert.rejects(store.appendEvents([event("evt-no-user", { userId: "" })]), /INVALID_EVENT_FIELD_TYPE/);
-  await assert.rejects(store.appendEvents([event("evt-no-device", { deviceId: "" })]), /INVALID_EVENT_FIELD_TYPE/);
+  await assert.rejects(store.appendEvents([event("evt-no-user", { userId: "" })]), /REQUIRED_FIELD_MISSING:userId|INVALID_EVENT_FIELD_TYPE/);
+  await assert.rejects(store.appendEvents([event("evt-no-device", { deviceId: "" })]), /REQUIRED_FIELD_MISSING:deviceId|INVALID_EVENT_FIELD_TYPE/);
   assert.deepEqual(await store.readEvents({ userId: "user-1" }), []);
 });
 
