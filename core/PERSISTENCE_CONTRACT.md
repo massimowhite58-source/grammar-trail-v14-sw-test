@@ -136,7 +136,7 @@ Never convert a persistence failure into silent success. If a learning response 
 - Verify only approved, versioned content packages enter Content Cache.
 
 ## 12. Explicitly out of scope
-- Choosing IndexedDB, SQLite, a hosted database, or a backend vendor.
+- Selecting the final production storage architecture or backend vendor. IndexedDB is the current local-first prototype candidate, not yet accepted as production-ready.
 - Authentication implementation and account lifecycle implementation.
 - Background sync and conflict-resolution UI.
 - Production encryption and key management.
