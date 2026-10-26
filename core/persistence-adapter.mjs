@@ -43,6 +43,15 @@ function validateUserFact(fact) {
   return null;
 }
 
+export class PersistenceFailureError extends Error {
+  constructor(operation, code = "STORAGE_UNAVAILABLE") {
+    super(code + ":" + operation);
+    this.name = "PersistenceFailureError";
+    this.code = code;
+    this.operation = operation;
+  }
+}
+
 export class PersistenceConflictError extends Error {
   constructor(eventId) {
     super("EVENT_ID_CONTENT_CONFLICT:" + eventId);
@@ -66,8 +75,24 @@ export class InMemoryPersistenceAdapter {
   #userFacts = new Map();
   #snapshots = new Map();
   #contentCache = new Map();
+  #nextFailures = new Map();
+
+  /** Test-only fault injection. This does not emulate real browser quota behavior. */
+  failNextOperation(operation, code = "STORAGE_UNAVAILABLE") {
+    if (typeof operation !== "string" || !operation) throw new TypeError("OPERATION_REQUIRED");
+    if (typeof code !== "string" || !code) throw new TypeError("FAILURE_CODE_REQUIRED");
+    this.#nextFailures.set(operation, code);
+  }
+
+  #throwInjectedFailure(operation) {
+    if (!this.#nextFailures.has(operation)) return;
+    const code = this.#nextFailures.get(operation);
+    this.#nextFailures.delete(operation);
+    throw new PersistenceFailureError(operation, code);
+  }
 
   async appendEvents(events) {
+    this.#throwInjectedFailure("appendEvents");
     if (!Array.isArray(events)) throw new TypeError("EVENT_BATCH_MUST_BE_ARRAY");
     const staged = new Map();
     for (const event of events) {
@@ -87,8 +112,49 @@ export class InMemoryPersistenceAdapter {
     return { appended: staged.size, duplicates: events.length - staged.size };
   }
 
-  async readEvents() {
-    return [...this.#events.values()].map(({ event }) => clone(event));
+  /**
+   * Stable order: occurredAt ascending, then eventId lexicographically.
+   * "from" is inclusive and "to" is exclusive. A cursor is the eventId of
+   * the last item returned by the previous page for the same query.
+   */
+  async readEvents(query = {}) {
+    if (!query || typeof query !== "object" || Array.isArray(query)) {
+      throw new TypeError("EVENT_QUERY_MUST_BE_OBJECT");
+    }
+    for (const key of ["userId", "deviceId", "sessionId", "knowledgeItemId", "from", "to", "cursor"]) {
+      if (query[key] !== undefined && (typeof query[key] !== "string" || !query[key])) {
+        throw new TypeError("INVALID_EVENT_QUERY_FIELD:" + key);
+      }
+    }
+    if (query.from !== undefined && !validDate(query.from)) throw new TypeError("INVALID_EVENT_QUERY_FROM");
+    if (query.to !== undefined && !validDate(query.to)) throw new TypeError("INVALID_EVENT_QUERY_TO");
+    if (query.from !== undefined && query.to !== undefined && Date.parse(query.from) >= Date.parse(query.to)) {
+      throw new TypeError("INVALID_EVENT_QUERY_RANGE");
+    }
+    if (query.limit !== undefined && (!Number.isInteger(query.limit) || query.limit < 1 || query.limit > 500)) {
+      throw new TypeError("INVALID_EVENT_QUERY_LIMIT");
+    }
+
+    let events = [...this.#events.values()].map(({ event }) => event)
+      .filter((event) => query.userId === undefined || event.userId === query.userId)
+      .filter((event) => query.deviceId === undefined || event.deviceId === query.deviceId)
+      .filter((event) => query.sessionId === undefined || event.sessionId === query.sessionId)
+      .filter((event) => query.knowledgeItemId === undefined || event.knowledgeItemId === query.knowledgeItemId)
+      .filter((event) => query.from === undefined || Date.parse(event.occurredAt) >= Date.parse(query.from))
+      .filter((event) => query.to === undefined || Date.parse(event.occurredAt) < Date.parse(query.to))
+      .sort((left, right) => {
+        const timeDifference = Date.parse(left.occurredAt) - Date.parse(right.occurredAt);
+        if (timeDifference !== 0) return timeDifference;
+        return left.eventId < right.eventId ? -1 : left.eventId > right.eventId ? 1 : 0;
+      });
+
+    if (query.cursor !== undefined) {
+      const cursorIndex = events.findIndex((event) => event.eventId === query.cursor);
+      if (cursorIndex < 0) throw new TypeError("INVALID_EVENT_CURSOR");
+      events = events.slice(cursorIndex + 1);
+    }
+    if (query.limit !== undefined) events = events.slice(0, query.limit);
+    return events.map(clone);
   }
 
   async getEventById(eventId) {
