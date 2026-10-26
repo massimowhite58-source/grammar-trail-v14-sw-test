@@ -8,6 +8,8 @@ const event = (eventId, overrides = {}) => ({
   occurredAt: "2026-10-27T10:00:00.000Z",
   schemaVersion: 1,
   coreVersion: "0.1.0",
+  userId: "user-1",
+  deviceId: "device-1",
   sessionId: "session-1",
   knowledgeItemId: "ki-present-simple",
   correct: true,
@@ -33,8 +35,8 @@ test("append/read preserves the complete event payload", async () => {
   const source = event("evt-1", { response: { selectedIndex: 1, note: "exact payload" } });
   await store.appendEvents([source]);
   source.response.note = "mutated after write";
-  assert.deepEqual(await store.getEventById("evt-1"), event("evt-1", { response: { selectedIndex: 1, note: "exact payload" } }));
-  assert.deepEqual(await store.readEvents(), [event("evt-1", { response: { selectedIndex: 1, note: "exact payload" } })]);
+  assert.deepEqual(await store.getEventById("evt-1", { userId: "user-1" }), event("evt-1", { response: { selectedIndex: 1, note: "exact payload" } }));
+  assert.deepEqual(await store.readEvents({ userId: "user-1" }), [event("evt-1", { response: { selectedIndex: 1, note: "exact payload" } })]);
 });
 
 test("same ID and same canonical event is an idempotent duplicate", async () => {
@@ -86,7 +88,7 @@ test("deleting and rebuilding a snapshot does not change source events", async (
   const store = new InMemoryPersistenceAdapter();
   await store.appendEvents([event("evt-1"), event("evt-2", { correct: false })]);
   const projector = (events) => ({ count: events.length, correct: events.filter((item) => item.correct).length });
-  const original = await store.rebuildSnapshot("learning-state", projector);
+  const original = await store.rebuildSnapshot("learning-state", projector, { userId: "user-1" });
   assert.deepEqual(original.state, { count: 2, correct: 1 });
   assert.equal(await store.deleteSnapshot("learning-state"), true);
   assert.equal(await store.readSnapshot("learning-state"), null);
@@ -151,7 +153,7 @@ test("User Facts can be updated without rewriting immutable Learning Events", as
     updatedAt: "2026-10-02T10:00:00.000Z"
   }));
   assert.equal((await store.readUserFact("user-1", "fact-1")).value.preferredSessionMinutes, 15);
-  assert.equal((await store.getEventById("evt-immutable")).correct, true);
+  assert.equal((await store.getEventById("evt-immutable", { userId: "user-1" })).correct, true);
   assert.equal((await store.readEvents()).length, 1);
 });
 
@@ -213,4 +215,48 @@ test("simulated storage failure is explicit and event batch remains atomic", asy
   });
   assert.deepEqual(await store.readEvents(), []);
   assert.deepEqual(await store.appendEvents([event("evt-a")]), { appended: 1, duplicates: 0 });
+});
+
+
+test("persistence requires user and device scope on every Learning Event", async () => {
+  const store = new InMemoryPersistenceAdapter();
+  await assert.rejects(store.appendEvents([event("evt-no-user", { userId: "" })]), /INVALID_EVENT_FIELD_TYPE/);
+  await assert.rejects(store.appendEvents([event("evt-no-device", { deviceId: "" })]), /INVALID_EVENT_FIELD_TYPE/);
+  assert.deepEqual(await store.readEvents({ userId: "user-1" }), []);
+});
+
+test("event reads require user scope and never expose another user's records", async () => {
+  const store = new InMemoryPersistenceAdapter();
+  await store.appendEvents([
+    event("evt-user-a", { userId: "user-a", deviceId: "device-a" }),
+    event("evt-user-b", { userId: "user-b", deviceId: "device-b" })
+  ]);
+  await assert.rejects(store.readEvents(), /EVENT_QUERY_USER_ID_REQUIRED/);
+  assert.deepEqual((await store.readEvents({ userId: "user-a" })).map((item) => item.eventId), ["evt-user-a"]);
+  assert.equal(await store.getEventById("evt-user-b", { userId: "user-a" }), null);
+  assert.equal((await store.getEventById("evt-user-b", { userId: "user-b" })).eventId, "evt-user-b");
+});
+
+test("event reads can isolate one device while preserving same user's multi-device history", async () => {
+  const store = new InMemoryPersistenceAdapter();
+  await store.appendEvents([
+    event("evt-device-a", { userId: "user-a", deviceId: "device-a" }),
+    event("evt-device-b", { userId: "user-a", deviceId: "device-b", occurredAt: "2026-10-27T11:00:00.000Z" })
+  ]);
+  assert.deepEqual((await store.readEvents({ userId: "user-a" })).map((item) => item.eventId), ["evt-device-a", "evt-device-b"]);
+  assert.deepEqual((await store.readEvents({ userId: "user-a", deviceId: "device-a" })).map((item) => item.eventId), ["evt-device-a"]);
+  assert.equal(await store.getEventById("evt-device-b", { userId: "user-a", deviceId: "device-a" }), null);
+});
+
+test("readEvents reports injected read failure explicitly", async () => {
+  const store = new InMemoryPersistenceAdapter();
+  await store.appendEvents([event("evt-1")]);
+  store.failNextOperation("readEvents", "STORAGE_UNAVAILABLE");
+  await assert.rejects(store.readEvents({ userId: "user-1" }), (error) => {
+    assert.ok(error instanceof PersistenceFailureError);
+    assert.equal(error.code, "STORAGE_UNAVAILABLE");
+    assert.equal(error.operation, "readEvents");
+    return true;
+  });
+  assert.deepEqual((await store.readEvents({ userId: "user-1" })).map((item) => item.eventId), ["evt-1"]);
 });
