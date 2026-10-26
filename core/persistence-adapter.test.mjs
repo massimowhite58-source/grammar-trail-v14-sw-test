@@ -44,7 +44,7 @@ test("same ID and same canonical event is an idempotent duplicate", async () => 
   const first = event("evt-1");
   assert.deepEqual(await store.appendEvents([first]), { appended: 1, duplicates: 0 });
   assert.deepEqual(await store.appendEvents([{ ...first, response: { selectedIndex: 1 } }]), { appended: 0, duplicates: 1 });
-  assert.equal((await store.readEvents()).length, 1);
+  assert.equal((await store.readEvents({ userId: "user-1" })).length, 1);
 });
 
 test("same ID with different content is an explicit conflict and never overwrites", async () => {
@@ -55,19 +55,19 @@ test("same ID with different content is an explicit conflict and never overwrite
     assert.equal(error.code, "EVENT_ID_CONTENT_CONFLICT");
     return true;
   });
-  assert.equal((await store.getEventById("evt-1")).correct, true);
+  assert.equal((await store.getEventById("evt-1", { userId: "user-1" })).correct, true);
 });
 
 test("invalid batch is atomic: no earlier valid event is partially appended", async () => {
   const store = new InMemoryPersistenceAdapter();
   await assert.rejects(store.appendEvents([event("evt-valid"), { eventId: "evt-invalid", type: "ANSWER_SUBMITTED" }]));
-  assert.deepEqual(await store.readEvents(), []);
+  assert.deepEqual(await store.readEvents({ userId: "user-1" }), []);
 });
 
 test("duplicate IDs with conflicting contents inside one batch are rejected atomically", async () => {
   const store = new InMemoryPersistenceAdapter();
   await assert.rejects(store.appendEvents([event("evt-1"), event("evt-1", { correct: false })]));
-  assert.deepEqual(await store.readEvents(), []);
+  assert.deepEqual(await store.readEvents({ userId: "user-1" }), []);
 });
 
 test("merge is idempotent and event union is independent of merge order", async () => {
@@ -78,7 +78,7 @@ test("merge is idempotent and event union is independent of merge order", async 
   await left.mergeEvents([a]);
   await left.mergeEvents([b]);
   await right.mergeEvents([b, a]);
-  const ids = async (store) => (await store.readEvents()).map((item) => item.eventId).sort();
+  const ids = async (store) => (await store.readEvents({ userId: "user-1" })).map((item) => item.eventId).sort();
   assert.deepEqual(await ids(left), ["evt-a", "evt-b"]);
   assert.deepEqual(await ids(right), ["evt-a", "evt-b"]);
   assert.deepEqual(await left.mergeEvents([a, b]), { appended: 0, duplicates: 2 });
@@ -92,9 +92,9 @@ test("deleting and rebuilding a snapshot does not change source events", async (
   assert.deepEqual(original.state, { count: 2, correct: 1 });
   assert.equal(await store.deleteSnapshot("learning-state"), true);
   assert.equal(await store.readSnapshot("learning-state"), null);
-  const rebuilt = await store.rebuildSnapshot("learning-state", projector);
+  const rebuilt = await store.rebuildSnapshot("learning-state", projector, { userId: "user-1" });
   assert.deepEqual(rebuilt.state, original.state);
-  assert.deepEqual((await store.readEvents()).map((item) => item.eventId), ["evt-1", "evt-2"]);
+  assert.deepEqual((await store.readEvents({ userId: "user-1" })).map((item) => item.eventId), ["evt-1", "evt-2"]);
 });
 
 test("integrity verification passes for valid events and reports counts", async () => {
@@ -109,7 +109,7 @@ test("invalid timestamp and missing envelope fields are rejected", async () => {
   const store = new InMemoryPersistenceAdapter();
   await assert.rejects(store.appendEvents([event("evt-bad-time", { occurredAt: "not-a-date" })]));
   await assert.rejects(store.appendEvents([event("evt-no-version", { schemaVersion: 0 })]));
-  assert.deepEqual(await store.readEvents(), []);
+  assert.deepEqual(await store.readEvents({ userId: "user-1" }), []);
 });
 
 test("clearing Content Cache preserves Learning Events and User Facts", async () => {
@@ -121,7 +121,7 @@ test("clearing Content Cache preserves Learning Events and User Facts", async ()
 
   assert.deepEqual(await store.clearContentCache(), { deleted: 2 });
   assert.equal(await store.readContentCache("starter-pack", "1.0.0"), null);
-  assert.deepEqual(await store.readEvents(), [event("evt-preserve")]);
+  assert.deepEqual(await store.readEvents({ userId: "user-1" }), [event("evt-preserve")]);
   assert.deepEqual(await store.readUserFacts("user-1"), [userFact("fact-1")]);
 });
 
@@ -154,7 +154,7 @@ test("User Facts can be updated without rewriting immutable Learning Events", as
   }));
   assert.equal((await store.readUserFact("user-1", "fact-1")).value.preferredSessionMinutes, 15);
   assert.equal((await store.getEventById("evt-immutable", { userId: "user-1" })).correct, true);
-  assert.equal((await store.readEvents()).length, 1);
+  assert.equal((await store.readEvents({ userId: "user-1" })).length, 1);
 });
 
 test("User Fact validation rejects missing provenance and invalid confidence", async () => {
@@ -213,7 +213,7 @@ test("simulated storage failure is explicit and event batch remains atomic", asy
     assert.equal(error.operation, "appendEvents");
     return true;
   });
-  assert.deepEqual(await store.readEvents(), []);
+  assert.deepEqual(await store.readEvents({ userId: "user-1" }), []);
   assert.deepEqual(await store.appendEvents([event("evt-a")]), { appended: 1, duplicates: 0 });
 });
 
