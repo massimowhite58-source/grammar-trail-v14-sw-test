@@ -49,4 +49,6 @@ Status: **Approved visual direction; initial token specification.** Core Lab is 
 - Do not claim a screen is verified on iPhone/MacBook unless tested on that device.
 
 ## Current action
-Core Lab feedback/explanatory text is being increased to 16–18 px with stronger navy contrast and improved line-height. Treat this as the baseline for future explanatory copy.
+- Core Lab feedback/explanatory text uses 16–18 px sizing, strong navy contrast, and improved line-height.
+- The active question prompt uses navy text (`#000080`), semibold weight, 19.2 px sizing, and 1.6 line-height to stand out from surrounding metadata. Apply the same prompt treatment to future learning screens.
+- Treat both treatments as the baseline for future explanatory copy and question prompts.
