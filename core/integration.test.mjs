@@ -265,3 +265,85 @@ test("rehydrates the learning projection from a persisted event stream", async (
   assert.equal(decideNextAction({ events: reloadedEvents, session: s, safety: "SAFE", taskBank: items }).action, "STABILIZE");
   assert.equal(validateEventStream(reloadedEvents).valid, true);
 });
+
+
+test("history read failure does not publish a partial snapshot", async () => {
+  const store = new InMemoryPersistenceAdapter();
+  await store.appendEvents([{
+    eventId: "evt-recovery-boundary-1",
+    type: "ANSWER_SUBMITTED",
+    occurredAt: "2026-10-28T12:00:00.000Z",
+    schemaVersion: 1,
+    coreVersion: "0.1.0",
+    userId: "recovery-test-user",
+    deviceId: "recovery-test-device",
+    sessionId: "recovery-test-session",
+    knowledgeItemId: "ki-present-simple",
+    phase: "NEW",
+    correct: false
+  }]);
+
+  store.failNextOperation("readEvents", "HISTORY_UNAVAILABLE");
+  let projectorCalled = false;
+  await assert.rejects(
+    store.rebuildSnapshot("recovery-snapshot", async (events) => {
+      projectorCalled = true;
+      return reconstructState(events, "ki-present-simple");
+    }, { userId: "recovery-test-user", knowledgeItemId: "ki-present-simple" }),
+    (error) => error.code === "HISTORY_UNAVAILABLE" && error.operation === "readEvents"
+  );
+
+  assert.equal(projectorCalled, false);
+  assert.equal(await store.readSnapshot("recovery-snapshot", "recovery-test-user"), null);
+  assert.equal((await store.verifyIntegrity()).valid, true);
+});
+
+test("repeated reconstruction is deterministic and returned event copies cannot mutate stored history", async () => {
+  const store = new InMemoryPersistenceAdapter();
+  const events = [
+    {
+      eventId: "evt-determinism-answer",
+      type: "ANSWER_SUBMITTED",
+      occurredAt: "2026-10-28T12:00:00.000Z",
+      schemaVersion: 1,
+      coreVersion: "0.1.0",
+      userId: "determinism-user",
+      deviceId: "determinism-device",
+      sessionId: "determinism-session",
+      knowledgeItemId: "ki-present-simple",
+      phase: "NEW",
+      correct: false
+    },
+    {
+      eventId: "evt-determinism-support",
+      type: "RECOVERY_SUPPORT_USED",
+      occurredAt: "2026-10-28T12:00:01.000Z",
+      schemaVersion: 1,
+      coreVersion: "0.1.0",
+      userId: "determinism-user",
+      deviceId: "determinism-device",
+      sessionId: "determinism-session",
+      knowledgeItemId: "ki-present-simple",
+      phase: "NEW",
+      supportLevel: "INDEPENDENT_RETRY",
+      triggerEventId: "evt-determinism-answer"
+    }
+  ];
+  await store.appendEvents(events);
+
+  const query = { userId: "determinism-user", knowledgeItemId: "ki-present-simple" };
+  const firstRead = await store.readEvents(query);
+  const secondRead = await store.readEvents(query);
+  const firstProjection = reconstructState(firstRead, "ki-present-simple");
+  const secondProjection = reconstructState(secondRead, "ki-present-simple");
+
+  assert.deepEqual(firstProjection, secondProjection);
+  assert.deepEqual(firstRead.map(event => event.eventId), secondRead.map(event => event.eventId));
+
+  firstRead[0].correct = true;
+  firstRead[0].response = { tampered: true };
+  const storedAgain = await store.readEvents(query);
+  assert.equal(storedAgain[0].correct, false);
+  assert.equal(storedAgain[0].response, undefined);
+  assert.equal((await store.verifyIntegrity()).valid, true);
+});
