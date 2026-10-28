@@ -2,7 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { resolveContent } from "./content-runtime.mjs";
 import { validateTaskForDelivery } from "./task-runtime.mjs";
-import { createSession, decideNextAction, submitAnswer, validateEventStream } from "./learning-core.mjs";
+import { createSession, decideNextAction, submitAnswer, validateEventStream, reconstructState } from "./learning-core.mjs";
+import { InMemoryPersistenceAdapter } from "./persistence-adapter.mjs";
 import { planRecovery } from "./recovery-runtime.mjs";
 
 const item = (overrides = {}) => ({
@@ -203,4 +204,64 @@ test("recovery escalation follows recorded history and never rewrites earlier an
   assert.equal(second.events.length, first.events.length + 2);
   assert.equal(second.events.every(event => event.knowledgeItemId === "ki-present-simple"), true);
   assert.equal(validateEventStream(second.events).valid, true);
+});
+
+
+test("rehydrates the learning projection from a persisted event stream", async () => {
+  const phases = ["NEW", "UNDERSTAND", "RECALL", "USE"];
+  const items = phases.map((phase) => item({
+    taskId: `task-${phase.toLowerCase()}`,
+    phase,
+    payload: { prompt: `Demonstration prompt for ${phase}`, choices: ["A", "B"] }
+  }));
+  const s = session();
+  let events = [];
+
+  for (const phase of phases) {
+    const decision = decideNextAction({ events, session: s, safety: "SAFE", taskBank: items });
+    assert.equal(decision.action, phase);
+    const resolved = resolveContent(request(items, { phase }));
+    assert.equal(resolved.status, "READY");
+    const gate = validateTaskForDelivery({
+      selectedTask: decision.task,
+      contentPackage: resolved.package,
+      userState: userState(),
+      expectedContentVersion: "content-v1",
+      expectedPhase: phase,
+      allowedHypothesisIds: ["hyp-third-person-s"]
+    });
+    assert.equal(gate.status, "READY");
+
+    const result = submitAnswer({
+      events, session: s, task: gate.task,
+      response: { selectedIndex: 1, selectedText: "B" },
+      correct: true, safety: "SAFE"
+    });
+    events = result.events;
+  }
+
+  const expectedState = reconstructState(events, "ki-present-simple");
+  assert.equal(expectedState.phase, "COMPLETE");
+  assert.equal(expectedState.attempts, 4);
+
+  // The adapter is an in-memory contract test double. Timestamps are assigned
+  // monotonically in this test to make the persisted order deterministic.
+  const store = new InMemoryPersistenceAdapter();
+  const persistedEvents = events.map((event, index) => ({
+    ...event,
+    occurredAt: new Date(Date.UTC(2026, 9, 28, 12, 0, index)).toISOString(),
+    userId: "test-user",
+    deviceId: "test-device"
+  }));
+  await store.appendEvents(persistedEvents);
+
+  const reloadedEvents = await store.readEvents({
+    userId: "test-user",
+    deviceId: "test-device",
+    knowledgeItemId: "ki-present-simple"
+  });
+  assert.deepEqual(reloadedEvents.map(event => event.eventId), persistedEvents.map(event => event.eventId));
+  assert.deepEqual(reconstructState(reloadedEvents, "ki-present-simple"), expectedState);
+  assert.equal(decideNextAction({ events: reloadedEvents, session: s, safety: "SAFE", taskBank: items }).action, "STABILIZE");
+  assert.equal(validateEventStream(reloadedEvents).valid, true);
 });
