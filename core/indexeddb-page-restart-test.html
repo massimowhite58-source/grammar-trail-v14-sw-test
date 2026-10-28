@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Grammar Trail — IndexedDB restart test</title></head>
+<body>
+  <p id="status">Running restart test…</p>
+  <script type="module">
+    import { IndexedDBEventAdapter } from "./indexeddb-persistence-adapter.mjs";
+    const params = new URLSearchParams(location.search);
+    const dbName = params.get("db");
+    const mode = params.get("mode");
+    const status = document.querySelector("#status");
+    try {
+      if (!dbName || !/^grammar-trail-restart-test-[a-z0-9-]+$/.test(dbName)) throw new Error("INVALID_TEST_DATABASE_NAME");
+      const adapter = await IndexedDBEventAdapter.open({ databaseName: dbName });
+      if (mode === "write") {
+        await adapter.appendEvents([{
+          eventId: "evt-page-restart-proof",
+          type: "ANSWER_SUBMITTED",
+          occurredAt: "2026-10-28T12:00:00.000Z",
+          schemaVersion: 1,
+          coreVersion: "0.1.0",
+          userId: "restart-test-user",
+          deviceId: "restart-test-device",
+          sessionId: "restart-test-session",
+          knowledgeItemId: "ki-restart-test",
+          phase: "NEW",
+          correct: false,
+          response: { selectedIndex: 0, selectedText: "original-response" }
+        }]);
+        adapter.close();
+        status.textContent = "WRITE_OK";
+      } else if (mode === "read") {
+        const event = await adapter.getEventById("evt-page-restart-proof", { userId: "restart-test-user", deviceId: "restart-test-device" });
+        if (!event || event.response?.selectedText !== "original-response" || event.correct !== false) throw new Error("EVENT_MISSING_OR_CHANGED_AFTER_PAGE_RELOAD");
+        adapter.close();
+        status.textContent = "READ_OK";
+      } else {
+        adapter.close();
+        throw new Error("INVALID_TEST_MODE");
+      }
+    } catch (error) {
+      status.textContent = "ERROR:" + (error?.message || String(error));
+    }
+  </script>
+</body>
+</html>
