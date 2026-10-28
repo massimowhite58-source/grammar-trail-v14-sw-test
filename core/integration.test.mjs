@@ -159,3 +159,48 @@ test("integrated pipeline completes NEW → UNDERSTAND → RECALL → USE withou
 function awaitableDecideNextAction(events, sessionValue, taskBank) {
   return decideNextAction({ events, session: sessionValue, safety: "SAFE", taskBank });
 }
+
+
+test("recovery escalation follows recorded history and never rewrites earlier answers", () => {
+  const { gate } = resolveAndGate([item()]);
+  const s = session();
+
+  const first = submitAnswer({
+    events: [], session: s, task: gate.task,
+    response: { selectedIndex: 0, selectedText: "She work." },
+    correct: false, safety: "SAFE"
+  });
+  const firstAnswer = first.events.find(event => event.type === "ANSWER_SUBMITTED");
+  const firstRecovery = planRecovery({
+    answerEvent: firstAnswer,
+    userState: userState(),
+    previousSupportLevel: "NONE"
+  });
+
+  assert.equal(firstRecovery.status, "READY");
+  assert.equal(firstRecovery.nextLevel, first.state.lastSupportLevel);
+  assert.equal(firstRecovery.nextLevel, "INDEPENDENT_RETRY");
+
+  const immutableHistoryBeforeRetry = JSON.stringify(first.events);
+  const second = submitAnswer({
+    events: first.events, session: s, task: gate.task,
+    response: { selectedIndex: 0, selectedText: "She work." },
+    correct: false, safety: "SAFE"
+  });
+  const secondAnswer = second.events.filter(event => event.type === "ANSWER_SUBMITTED").at(-1);
+  const secondRecovery = planRecovery({
+    answerEvent: secondAnswer,
+    userState: userState("CAUTION"),
+    previousSupportLevel: first.state.lastSupportLevel
+  });
+
+  assert.equal(secondRecovery.status, "READY");
+  assert.equal(secondRecovery.nextLevel, second.state.lastSupportLevel);
+  assert.equal(secondRecovery.nextLevel, "MINIMAL_CUE");
+  assert.equal(secondRecovery.strategy.preserveTarget, true);
+  assert.equal(secondRecovery.notices.includes("REDUCE_SECONDARY_LOAD"), true);
+  assert.equal(JSON.stringify(first.events), immutableHistoryBeforeRetry);
+  assert.equal(second.events.length, first.events.length + 2);
+  assert.equal(second.events.every(event => event.knowledgeItemId === "ki-present-simple"), true);
+  assert.equal(validateEventStream(second.events).valid, true);
+});
