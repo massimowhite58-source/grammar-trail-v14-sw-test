@@ -29,4 +29,5 @@ jobs:
             core/task-runtime.test.mjs \
             core/recovery-runtime.test.mjs \
             core/integration.test.mjs \
-            core/content-library.test.mjs
+            core/content-library.test.mjs \\
+            core/content-store.test.mjs
