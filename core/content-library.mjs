@@ -110,6 +110,7 @@ export function validateContentPackage(pkg) {
     const rows = list(entities[collection]);
     const seenIds = new Set();
     const seenRefs = new Set();
+    const unversioned = new Set(["relations", "provenanceRecords", "rightsRecords", "qualityReviews", "taskDefinitions"]);
     rows.forEach((entity, index) => {
       checkedEntities++;
       const path = "entities." + collection + "[" + index + "]";
@@ -119,38 +120,32 @@ export function validateContentPackage(pkg) {
       }
       if (!nonEmptyString(entity.id)) {
         add(errors, "ENTITY_ID_REQUIRED", path + ".id", "Entity id is required.");
-      } else if (seenIds.has(entity.id) && collection !== "relations" &&
-          collection !== "provenanceRecords" && collection !== "rightsRecords" &&
-          collection !== "qualityReviews" && collection !== "taskDefinitions") {
-        // Versioned entities may share a stable ID only if their version differs.
-        // The stable ID/version pair is checked below; repeated stable IDs are allowed.
-      } else {
-        seenIds.add(entity.id);
+        return;
       }
 
-      if (collection !== "relations" && collection !== "provenanceRecords" &&
-          collection !== "rightsRecords" && collection !== "qualityReviews" &&
-          collection !== "taskDefinitions") {
-        if (!nonEmptyString(entity.version)) {
-          add(errors, "ENTITY_VERSION_REQUIRED", path + ".version", "Entity version is required.");
-        } else if (nonEmptyString(entity.id)) {
-          const ref = versionRef(entity);
-          if (seenRefs.has(ref)) {
-            add(errors, "DUPLICATE_ENTITY_VERSION", path, "Duplicate entity reference: " + ref + ".");
-          } else {
-            seenRefs.add(ref);
-            allByRef.set(collection + ":" + ref, entity);
-            if (!allById.has(collection + ":" + entity.id)) allById.set(collection + ":" + entity.id, []);
-            allById.get(collection + ":" + entity.id).push(entity);
-          }
-        }
-      } else if (nonEmptyString(entity.id)) {
-        if (seenIds.has(entity.id) && collection !== "relations") {
+      if (unversioned.has(collection)) {
+        if (seenIds.has(entity.id)) {
           add(errors, "DUPLICATE_ENTITY_ID", path + ".id", "Duplicate id in " + collection + ": " + entity.id + ".");
+        } else {
+          seenIds.add(entity.id);
         }
-        seenIds.add(entity.id);
         allById.set(collection + ":" + entity.id, entity);
+        return;
       }
+
+      if (!nonEmptyString(entity.version)) {
+        add(errors, "ENTITY_VERSION_REQUIRED", path + ".version", "Entity version is required.");
+        return;
+      }
+      const ref = versionRef(entity);
+      if (seenRefs.has(ref)) {
+        add(errors, "DUPLICATE_ENTITY_VERSION", path, "Duplicate entity reference: " + ref + ".");
+        return;
+      }
+      seenRefs.add(ref);
+      allByRef.set(collection + ":" + ref, entity);
+      if (!allById.has(collection + ":" + entity.id)) allById.set(collection + ":" + entity.id, []);
+      allById.get(collection + ":" + entity.id).push(entity);
     });
   }
 
