@@ -9,8 +9,8 @@ const { setTimeout: delay } = require("node:timers/promises");
 
   try {
     await page.goto("http://127.0.0.1:8000/core/content-store-browser-test.html", { waitUntil: "networkidle" });
-    await page.getByRole("button", { name: "Clear test database only" }).click();
     page.once("dialog", dialog => dialog.accept());
+    await page.getByRole("button", { name: "Clear test database only" }).click();
     await page.getByRole("button", { name: "Run IndexedDB checks" }).click();
     await page.locator("#status").getByText(/NEXT: Reload this page/).waitFor({ timeout: 15000 });
     const firstRun = await page.locator("#status").innerText();
