@@ -59,6 +59,20 @@
         assert(rejected, "invalid batch should reject");
         equal(await adapter.getEventById("evt-2", { userId: "user-a" }), null, "partial event was written");
       });
+      await check("transaction rolls back earlier writes when a later event conflicts", async () => {
+        let conflict = false;
+        try {
+          await adapter.appendEvents([
+            event("evt-atomic-probe"),
+            event("evt-1", { correct: false })
+          ]);
+        } catch (error) {
+          conflict = error instanceof PersistenceConflictError && error.code === "EVENT_ID_CONTENT_CONFLICT";
+        }
+        assert(conflict, "expected event ID conflict to abort the batch");
+        equal(await adapter.getEventById("evt-atomic-probe", { userId: "user-a" }), null, "earlier write leaked from aborted transaction");
+        equal(await adapter.getEventById("evt-1", { userId: "user-a" }), event("evt-1"), "original event changed during rollback");
+      });
       await check("user/device scope is enforced", async () => {
         await adapter.appendEvents([event("evt-user-b", { userId: "user-b", deviceId: "device-b" })]);
         equal(await adapter.getEventById("evt-user-b", { userId: "user-a" }), null, "cross-user lookup leaked event");
