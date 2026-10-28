@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Grammar Trail — Content Store Browser Check</title>
+<style>
+:root{color-scheme:light dark;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+body{max-width:760px;margin:0 auto;padding:24px;line-height:1.5}
+h1{font-size:1.45rem}p{max-width:68ch}
+button{font:inherit;padding:10px 14px;margin:6px 6px 6px 0;border:1px solid #8080ff;border-radius:10px;cursor:pointer}
+#run{background:#000080;color:white}#clear{background:transparent}
+#status{padding:12px;border:1px solid #888;border-radius:10px;white-space:pre-wrap;overflow-wrap:anywhere;min-height:6em}
+.note{opacity:.85;font-size:.95rem}
+</style>
+</head>
+<body>
+<h1>Grammar Trail — Content Store browser check</h1>
+<p>This diagnostic page writes only to a dedicated test database. It does not touch the dashboard's progress, Learning Events, or the production content database.</p>
+<p class="note">Run on a secure origin (GitHub Pages/HTTPS or localhost). For persistence verification, run the test, reload this page, then run the “Verify after reload” check.</p>
+<button id="run">Run IndexedDB checks</button>
+<button id="verify">Verify after reload</button>
+<button id="clear">Clear test database only</button>
+<pre id="status" role="status" aria-live="polite">Ready. No test has been run.</pre>
+<script type="module">
+import { createContentStore, createIndexedDBContentAdapter } from "./content-store.mjs";
+
+const DB_NAME = "grammar-trail-content-browser-test";
+const output = document.querySelector("#status");
+const complexity = { grammar: "low", lexical: "medium", context: "low" };
+
+function fixture(version = "1.0.0") {
+  const taskId = "task-a";
+  const theoryId = "theory-a";
+  return {
+    packageId: "browser-check",
+    packageVersion: version,
+    schemaVersion: 1,
+    minEngineVersion: "0.1.0",
+    entities: {
+      learningUnits: [{ id: "unit-a", version: "1.0.0", title: "Test unit", cefrLevel: "A1",
+        conceptRefs: ["concept-a@1.0.0"], contentItemRefs: [theoryId + "@1.0.0"], taskVersionRefs: [taskId + "@1.0.0"] }],
+      concepts: [{ id: "concept-a", version: "1.0.0", title: "Test concept", definition: "A diagnostic concept." }],
+      contentItems: [{ id: theoryId, version: "1.0.0", contentType: "theory", title: "Test theory",
+        body: "Original test explanation.", conceptRefs: ["concept-a@1.0.0"], complexity,
+        provenanceId: "prov-a", rightsId: "rights-a", qualityReviewId: "review-theory", publicationStatus: "PUBLISHED" }],
+      taskDefinitions: [{ id: "task-def-a", targetConceptRefs: ["concept-a@1.0.0"], taskType: "single_choice" }],
+      taskVersions: [{ id: taskId, version: "1.0.0", taskDefinitionId: "task-def-a", prompt: "Choose one.",
+        responseType: "single_choice", answerSpec: { options: [{ id: "a", text: "A" }, { id: "b", text: "B" }], correctOptionIds: ["a"] },
+        conceptRefs: ["concept-a@1.0.0"], complexity, provenanceId: "prov-a", rightsId: "rights-a",
+        qualityReviewId: "review-task", publicationStatus: "PUBLISHED" }],
+      relations: [],
+      provenanceRecords: [{ id: "prov-a", origin: "Diagnostic fixture", createdBy: "Grammar Trail test" }],
+      rightsRecords: [{ id: "rights-a", license: "OWNED_ORIGINAL", status: "CLEARED" }],
+      qualityReviews: [
+        { id: "review-theory", targetRef: "theory-a@1.0.0", rulesVersion: "1", status: "PASS", blockers: [] },
+        { id: "review-task", targetRef: "task-a@1.0.0", rulesVersion: "1", status: "PASS", blockers: [] }
+      ]
+    }
+  };
+}
+
+function store() {
+  return createContentStore({
+    adapter: createIndexedDBContentAdapter({ databaseName: DB_NAME }),
+    engineVersion: "0.1.0"
+  });
+}
+function log(lines) { output.textContent = lines.join("\n"); }
+function assert(condition, message) { if (!condition) throw new Error(message); }
+
+document.querySelector("#run").addEventListener("click", async () => {
+  const lines = [];
+  try {
+    assert("indexedDB" in window, "FAIL: IndexedDB API is unavailable.");
+    lines.push("PASS: IndexedDB API is available.");
+    const api = store();
+    const valid = await api.installPackage(fixture());
+    assert(valid.status === "ACTIVATED" || valid.status === "ACTIVATED_EXISTING_VERSION",
+      "FAIL: valid package did not activate (" + valid.status + ").");
+    lines.push("PASS: valid package installed (" + valid.status + ").");
+
+    const activeBefore = await api.getActivePackage();
+    assert(activeBefore.status === "FOUND", "FAIL: active package cannot be read.");
+    assert(activeBefore.package.entities.contentItems[0].body === "Original test explanation.",
+      "FAIL: read-back content did not match.");
+    lines.push("PASS: active package read-back matches.");
+
+    const invalid = fixture("1.1.0");
+    invalid.entities.taskVersions[0].answerSpec.correctOptionIds = ["not-an-option"];
+    const rejected = await api.installPackage(invalid);
+    assert(rejected.status === "INVALID_PACKAGE", "FAIL: invalid package was not rejected (" + rejected.status + ").");
+    const activeAfter = await api.getActivePackage();
+    assert(activeAfter.packageRef === activeBefore.packageRef,
+      "FAIL: active package changed after invalid package was rejected.");
+    lines.push("PASS: invalid update rejected; previous active package retained.");
+
+    lines.push("NEXT: Reload this page, then click “Verify after reload”.");
+    log(lines);
+  } catch (error) {
+    lines.push("FAIL: " + (error?.message || String(error)));
+    log(lines);
+  }
+});
+
+document.querySelector("#verify").addEventListener("click", async () => {
+  const lines = [];
+  try {
+    const active = await store().getActivePackage();
+    assert(active.status === "FOUND", "FAIL: active package was not found after reload (" + active.status + ").");
+    assert(active.packageRef === "browser-check@1.0.0", "FAIL: unexpected active package ref " + active.packageRef);
+    assert(active.package.entities.contentItems[0].body === "Original test explanation.",
+      "FAIL: persisted package contents differ after reload.");
+    lines.push("PASS: active package survived page reload.");
+    lines.push("PASS: exact package ref and content body are preserved.");
+  } catch (error) {
+    lines.push("FAIL: " + (error?.message || String(error)));
+  }
+  log(lines);
+});
+
+document.querySelector("#clear").addEventListener("click", async () => {
+  if (!confirm("Delete only the dedicated browser-test database '" + DB_NAME + "'?")) return;
+  try {
+    const api = createIndexedDBContentAdapter({ databaseName: DB_NAME });
+    // Close the test adapter's connection by opening/deleting only the named test DB
+    // from a fresh page context; this button never targets app or learner-data DBs.
+    void api;
+    await new Promise((resolve, reject) => {
+      const request = indexedDB.deleteDatabase(DB_NAME);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+      request.onblocked = () => reject(new Error("Database deletion blocked. Close other test tabs and retry."));
+    });
+    log(["PASS: dedicated browser-test database deleted."]);
+  } catch (error) {
+    log(["FAIL: " + (error?.message || String(error))]);
+  }
+});
+</script>
+</body>
+</html>
