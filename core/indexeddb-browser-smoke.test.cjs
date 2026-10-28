@@ -20,7 +20,7 @@ const { chromium } = require("playwright");
     const details = (await page.locator("#details").textContent()).trim();
     console.log(status);
     if (details !== "No errors.") console.error(details);
-    if (!/^7 passed · 0 failed$/.test(status)) throw new Error(`Unexpected browser smoke-test result: ${status}`);
+    if (!/^8 passed · 0 failed$/.test(status)) throw new Error(`Unexpected browser smoke-test result: ${status}`);
 
     if (pageErrors.length) throw new Error(`Browser page errors: ${pageErrors.join("; ")}`);
 
