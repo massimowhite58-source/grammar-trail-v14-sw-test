@@ -94,6 +94,14 @@
         adapter = await IndexedDBEventAdapter.open({ databaseName: dbName });
         equal((await adapter.getEventById("evt-1", { userId: "user-a" })).eventId, "evt-1", "event missing after reopen");
       });
+      await check("existing history survives a database schema-version upgrade", async () => {
+        const before = await adapter.getEventById("evt-1", { userId: "user-a" });
+        adapter.close();
+        adapter = await IndexedDBEventAdapter.open({ databaseName: dbName, version: 2 });
+        const after = await adapter.getEventById("evt-1", { userId: "user-a" });
+        equal(after, before, "event changed or disappeared after schema upgrade");
+        equal((await adapter.readEvents({ userId: "user-a" })).map((event) => event.eventId), ["evt-1", "evt-a", "evt-b", "evt-c"], "event history changed after schema upgrade");
+      });
     } catch (error) {
       failed += 1; errors.push(`Harness setup: ${error.stack || error}`);
     } finally {
