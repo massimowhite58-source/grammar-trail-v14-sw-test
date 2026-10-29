@@ -39,6 +39,12 @@
     let adapter;
     try {
       adapter = await IndexedDBEventAdapter.open({ databaseName: dbName });
+      await check("unavailable IndexedDB API fails explicitly", async () => {
+        let rejected = false;
+        try { await IndexedDBEventAdapter.open({ indexedDB: null, databaseName: `${dbName}-unavailable` }); }
+        catch (error) { rejected = error.code === "INDEXEDDB_UNAVAILABLE"; }
+        assert(rejected, "expected an explicit INDEXEDDB_UNAVAILABLE error");
+      });
       await check("append and exact read-back", async () => {
         await adapter.appendEvents([event("evt-1")]);
         equal(await adapter.getEventById("evt-1", { userId: "user-a" }), event("evt-1"), "event round-trip mismatch");
