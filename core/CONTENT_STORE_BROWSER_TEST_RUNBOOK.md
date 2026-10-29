@@ -40,3 +40,19 @@ This is a diagnostic for the isolated Content Store only. It must not be used as
 - Repeat on Safari on iPhone and on Android Chrome before making cross-device claims.
 - This test does not yet prove offline behavior, browser eviction resistance, quota recovery, full app integration, or preservation of actual learner history during an application upgrade.
 - If a check fails, keep the output and do not merge. Fix the issue on the feature branch and rerun the test.
+
+## Recorded manual test result
+
+- Test date recorded: 2026-10-29.
+- Environment: user's Mac; browser name/version not recorded.
+- Test page: `core/content-store-browser-test.html`, served from `http://localhost:8000`.
+- Initial IndexedDB checks: **PASS**.
+  - IndexedDB API available.
+  - Valid package installed (`ACTIVATED`).
+  - Active package read-back matched.
+  - Invalid update rejected; previous active package retained.
+- After page reload: **PASS**.
+  - Active package survived page reload.
+  - Exact package reference and content body were preserved.
+- Cleanup: not performed at time of recording; dedicated test database remains available for follow-up.
+- Scope note: this is a successful manual browser run for this Mac/browser environment and fixture only. Browser identity/version, mobile browsers, failure/quota scenarios, offline behavior, application integration, and learner-history upgrade/restore guarantees remain unverified.
