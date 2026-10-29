@@ -108,6 +108,16 @@
         equal(failure.code, "INDEXEDDB_UNAVAILABLE", "unexpected storage error code");
         equal(failure.operation, "open", "unexpected failing operation");
       });
+      await check("closed adapter refuses reads with an explicit error", async () => {
+        const closedAdapter = await IndexedDBEventAdapter.open({ databaseName: dbName });
+        closedAdapter.close();
+        let failure = null;
+        try { await closedAdapter.readEvents({ userId: "user-a" }); }
+        catch (error) { failure = error; }
+        assert(failure instanceof PersistenceFailureError, "expected a typed persistence failure");
+        equal(failure.code, "DATABASE_CLOSED", "unexpected closed-database error code");
+        equal(failure.operation, "readEvents", "unexpected failing operation");
+      });
       await check("existing history survives a database schema-version upgrade", async () => {
         const before = await adapter.getEventById("evt-1", { userId: "user-a" });
         adapter.close();
