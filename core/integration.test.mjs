@@ -78,6 +78,40 @@ test("correct answer passes the same delivery gate and advances the learning pha
   assert.equal(validateEventStream(result.events).valid, true);
 });
 
+test("a later incorrect answer preserves earlier successful evidence", () => {
+  const phases = ["NEW", "UNDERSTAND"];
+  const tasks = phases.map(phase => item({
+    taskId: `task-${phase.toLowerCase()}`,
+    phase,
+    payload: { prompt: `Demonstration prompt for ${phase}`, choices: ["A", "B"] }
+  }));
+  const s = session();
+  const first = submitAnswer({
+    events: [], session: s, task: tasks[0],
+    response: { selectedIndex: 1, selectedText: "B" },
+    correct: true, safety: "SAFE"
+  });
+  const originalHistory = JSON.stringify(first.events);
+  assert.deepEqual(first.state.completedPhases, ["NEW"]);
+  assert.equal(first.state.correctAttempts, 1);
+
+  const second = submitAnswer({
+    events: first.events, session: s, task: tasks[1],
+    response: { selectedIndex: 0, selectedText: "A" },
+    correct: false, safety: "SAFE"
+  });
+
+  assert.equal(JSON.stringify(second.events.slice(0, first.events.length)), originalHistory);
+  assert.equal(second.events.length, first.events.length + 2);
+  assert.deepEqual(second.state.completedPhases, ["NEW"]);
+  assert.equal(second.state.phase, "UNDERSTAND");
+  assert.equal(second.state.attempts, 2);
+  assert.equal(second.state.correctAttempts, 1);
+  assert.equal(second.state.incorrectAttempts, 1);
+  assert.equal(second.state.lastSupportLevel, "INDEPENDENT_RETRY");
+  assert.equal(validateEventStream(second.events).valid, true);
+});
+
 test("missing User State or unsafe state is blocked before an answer can be recorded", () => {
   const { content } = resolveAndGate([item()]);
   const missing = validateTaskForDelivery({
