@@ -5,33 +5,64 @@
   <p id="status">Running restart test…</p>
   <script type="module">
     import { IndexedDBEventAdapter } from "./indexeddb-persistence-adapter.mjs";
+    import { reconstructState, validateEventStream } from "./learning-core.mjs";
     const params = new URLSearchParams(location.search);
     const dbName = params.get("db");
     const mode = params.get("mode");
     const status = document.querySelector("#status");
+    const phases = ["NEW", "UNDERSTAND", "RECALL", "USE"];
+    const common = {
+      schemaVersion: 1, coreVersion: "0.1.0",
+      userId: "restart-test-user", deviceId: "restart-test-device",
+      sessionId: "restart-test-session", knowledgeItemId: "ki-restart-test"
+    };
+    function makeEvents() {
+      const events = [];
+      phases.forEach((phase, index) => {
+        const occurredAt = new Date(Date.UTC(2026, 9, 28, 12, 0, index * 2)).toISOString();
+        events.push({
+          ...common, eventId: `evt-restart-answer-${index}`,
+          type: "ANSWER_SUBMITTED", occurredAt, phase,
+          taskId: `task-${phase.toLowerCase()}`, hypothesisId: "hyp-restart-test",
+          response: { selectedIndex: 1, selectedText: index === 0 ? "original-response" : "B" },
+          correct: true, durationMs: 5000, contentVersion: "content-v1", algorithmVersion: "0.1.0"
+        });
+        events.push({
+          ...common, eventId: `evt-restart-phase-${index}`,
+          type: "PHASE_COMPLETED",
+          occurredAt: new Date(Date.UTC(2026, 9, 28, 12, 0, index * 2 + 1)).toISOString(),
+          phase, taskId: `task-${phase.toLowerCase()}`,
+          evidenceType: phase === "USE" ? "APPLIED_USE" : phase === "RECALL" ? "INDEPENDENT_RECALL" : "PHASE_RESPONSE",
+          contentVersion: "content-v1", algorithmVersion: "0.1.0"
+        });
+      });
+      return events;
+    }
     try {
       if (!dbName || !/^grammar-trail-restart-test-[a-z0-9-]+$/.test(dbName)) throw new Error("INVALID_TEST_DATABASE_NAME");
       const adapter = await IndexedDBEventAdapter.open({ databaseName: dbName });
       if (mode === "write") {
-        await adapter.appendEvents([{
-          eventId: "evt-page-restart-proof",
-          type: "ANSWER_SUBMITTED",
-          occurredAt: "2026-10-28T12:00:00.000Z",
-          schemaVersion: 1,
-          coreVersion: "0.1.0",
-          userId: "restart-test-user",
-          deviceId: "restart-test-device",
-          sessionId: "restart-test-session",
-          knowledgeItemId: "ki-restart-test",
-          phase: "NEW",
-          correct: false,
-          response: { selectedIndex: 0, selectedText: "original-response" }
-        }]);
+        await adapter.appendEvents(makeEvents());
         adapter.close();
         status.textContent = "WRITE_OK";
       } else if (mode === "read") {
-        const event = await adapter.getEventById("evt-page-restart-proof", { userId: "restart-test-user", deviceId: "restart-test-device" });
-        if (!event || event.response?.selectedText !== "original-response" || event.correct !== false) throw new Error("EVENT_MISSING_OR_CHANGED_AFTER_PAGE_RELOAD");
+        const events = await adapter.readEvents({
+          userId: common.userId, deviceId: common.deviceId, knowledgeItemId: common.knowledgeItemId
+        });
+        const firstAnswer = events.find((event) => event.eventId === "evt-restart-answer-0");
+        if (!firstAnswer || firstAnswer.response?.selectedText !== "original-response" || firstAnswer.correct !== true) {
+          throw new Error("EVENT_MISSING_OR_CHANGED_AFTER_PAGE_RELOAD");
+        }
+        if (events.length !== 8 || !validateEventStream(events).valid) throw new Error("PERSISTED_EVENT_STREAM_INVALID");
+        const state = reconstructState(events, common.knowledgeItemId);
+        if (state.phase !== "COMPLETE" || state.attempts !== 4 || state.correctAttempts !== 4 ||
+            state.incorrectAttempts !== 0 || state.completedPhases.join(",") !== phases.join(",")) {
+          throw new Error("RECONSTRUCTED_STATE_MISMATCH:" + JSON.stringify(state));
+        }
+        const repeatedState = reconstructState(await adapter.readEvents({
+          userId: common.userId, deviceId: common.deviceId, knowledgeItemId: common.knowledgeItemId
+        }), common.knowledgeItemId);
+        if (JSON.stringify(state) !== JSON.stringify(repeatedState)) throw new Error("RECONSTRUCTION_NOT_DETERMINISTIC");
         adapter.close();
         status.textContent = "READ_OK";
       } else {
