@@ -95,6 +95,16 @@
         const second = await adapter.readEvents({ userId: "user-a", limit: 2, cursor: first.at(-1).eventId });
         equal(second.map((x) => x.eventId), ["evt-b", "evt-c"], "second page order mismatch");
       });
+      await check("invalid cursor and page limit are rejected explicitly", async () => {
+        let cursorRejected = false;
+        try { await adapter.readEvents({ userId: "user-a", cursor: "evt-does-not-exist" }); }
+        catch (error) { cursorRejected = error instanceof TypeError && error.message === "INVALID_EVENT_CURSOR"; }
+        assert(cursorRejected, "invalid cursor should be rejected");
+        let limitRejected = false;
+        try { await adapter.readEvents({ userId: "user-a", limit: 0 }); }
+        catch (error) { limitRejected = error instanceof TypeError && error.message === "INVALID_EVENT_QUERY_LIMIT"; }
+        assert(limitRejected, "invalid page limit should be rejected");
+      });
       await check("data survives close and reopen", async () => {
         adapter.close();
         adapter = await IndexedDBEventAdapter.open({ databaseName: dbName });
