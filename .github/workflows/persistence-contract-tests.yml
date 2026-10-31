@@ -1,0 +1,29 @@
+name: Persistence adapter contract tests
+
+on:
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  persistence-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Run core and persistence tests
+        run: >-
+          node --test
+          core/learning-core.test.mjs
+          core/content-runtime.test.mjs
+          core/task-runtime.test.mjs
+          core/recovery-runtime.test.mjs
+          core/integration.test.mjs
+          core/persistence-adapter.test.mjs
