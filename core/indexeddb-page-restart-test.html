@@ -59,10 +59,53 @@
             state.incorrectAttempts !== 0 || state.completedPhases.join(",") !== phases.join(",")) {
           throw new Error("RECONSTRUCTED_STATE_MISMATCH:" + JSON.stringify(state));
         }
+        // Append a later incorrect retrieval attempt after the completed cycle.
+        // Existing successful evidence must remain byte-for-byte equivalent.
+        const originalHistory = JSON.stringify(events);
+        const laterAnswer = {
+          ...common,
+          eventId: "evt-restart-later-incorrect-answer",
+          type: "ANSWER_SUBMITTED",
+          occurredAt: "2026-10-28T12:10:00.000Z",
+          phase: "USE",
+          taskId: "task-later-review",
+          hypothesisId: "hyp-restart-test",
+          response: { selectedIndex: 0, selectedText: "later-incorrect-response" },
+          correct: false,
+          durationMs: 7000,
+          contentVersion: "content-v1",
+          algorithmVersion: "0.1.0"
+        };
+        const laterSupport = {
+          ...common,
+          eventId: "evt-restart-later-support",
+          type: "RECOVERY_SUPPORT_USED",
+          occurredAt: "2026-10-28T12:10:01.000Z",
+          phase: "USE",
+          supportLevel: "INDEPENDENT_RETRY",
+          triggerEventId: laterAnswer.eventId
+        };
+        await adapter.appendEvents([laterAnswer, laterSupport]);
+        const extendedHistory = await adapter.readEvents({
+          userId: common.userId, deviceId: common.deviceId, knowledgeItemId: common.knowledgeItemId
+        });
+        if (JSON.stringify(extendedHistory.slice(0, events.length)) !== originalHistory) {
+          throw new Error("EARLIER_LEARNING_EVIDENCE_WAS_CHANGED");
+        }
+        if (extendedHistory.length !== 10 || !validateEventStream(extendedHistory).valid) {
+          throw new Error("APPENDED_EVENT_STREAM_INVALID");
+        }
+        const extendedState = reconstructState(extendedHistory, common.knowledgeItemId);
+        if (extendedState.attempts !== 5 || extendedState.correctAttempts !== 4 ||
+            extendedState.incorrectAttempts !== 1 || extendedState.latestAnswerCorrect !== false ||
+            extendedState.lastSupportLevel !== "INDEPENDENT_RETRY" ||
+            extendedState.completedPhases.join(",") !== phases.join(",")) {
+          throw new Error("APPENDED_STATE_MISMATCH:" + JSON.stringify(extendedState));
+        }
         const repeatedState = reconstructState(await adapter.readEvents({
           userId: common.userId, deviceId: common.deviceId, knowledgeItemId: common.knowledgeItemId
         }), common.knowledgeItemId);
-        if (JSON.stringify(state) !== JSON.stringify(repeatedState)) throw new Error("RECONSTRUCTION_NOT_DETERMINISTIC");
+        if (JSON.stringify(extendedState) !== JSON.stringify(repeatedState)) throw new Error("RECONSTRUCTION_NOT_DETERMINISTIC");
         adapter.close();
         status.textContent = "READ_OK";
       } else {
