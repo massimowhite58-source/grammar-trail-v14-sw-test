@@ -55,6 +55,7 @@ export function classifyDiagnostics({
       seen.add(diagnosticId);
       records.push(Object.freeze({
         diagnosticId,
+        answerEventId,
         partId: partResult.partId,
         errorTag: rule.errorTag,
         evidence: Object.freeze({
