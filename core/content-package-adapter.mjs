@@ -127,6 +127,10 @@ export function ingestMarkdownContentPackage({ manifest, documents, profile }) {
       if (!Object.hasOwn(item.sections, heading))
         issues.push({ code: "SPECIAL_HEADING_MISSING", exerciseId: item.exerciseId, heading });
     }
+    for (const marker of special?.requiredTextMarkers ?? []) {
+      if (!item.sourceBody.includes(marker))
+        issues.push({ code: "SPECIAL_TEXT_MARKER_MISSING", exerciseId: item.exerciseId, marker });
+    }
     if (special?.sectionCount !== undefined && Object.keys(item.sections).length !== special.sectionCount)
       issues.push({ code: "SPECIAL_SECTION_COUNT_MISMATCH", exerciseId: item.exerciseId, expected: special.sectionCount, actual: Object.keys(item.sections).length });
     return {
