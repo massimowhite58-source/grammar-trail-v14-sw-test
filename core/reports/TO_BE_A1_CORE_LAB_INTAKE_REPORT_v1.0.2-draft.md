@@ -3,16 +3,18 @@
 **Content package:** `TO_BE_A1_FULL_CONTENT_LIBRARY v1.0.2-draft`  
 **Core branch:** `feat/persistence-adapter-test-double`  
 **Review type:** structural intake + Core Lab capability compatibility  
-**Decision:** CONTENT FIXTURE ACCEPTED FOR INTAKE; FULL FUNCTIONAL EXECUTION BLOCKED  
+**Decision:** STRUCTURAL REVIEW PASS; PACKAGE ARCHIVE NOT YET STORED IN REPOSITORY; FULL FUNCTIONAL EXECUTION BLOCKED  
 **Scope:** isolated test branch only. No `main`, production, learner data, or Content Library source repository changes.
 
 ## 1. Package received
 
-The package archive is stored at:
+The exact package archive is available in the current ChatGPT conversation as:
 
-`core/fixtures/TO_BE_A1_FULL_CONTENT_LIBRARY_v1.0.2-draft.zip`
+`TO_BE_A1_FULL_CONTENT_LIBRARY_v1.0.2-draft.zip`
 
-It contains nine Markdown files:
+The repository contains this intake report. The ZIP itself is **not currently stored in the repository**; do not treat this report as evidence that the fixture was successfully committed.
+
+The archive contains nine Markdown files:
 - `README.md`
 - `CORE_LAB_HANDOFF.md`
 - `EXERCISE_BANK_INDEX.md`
@@ -88,13 +90,14 @@ The existing generic IndexedDB and event-history tests do not prove that TO BE A
 
 ## 5. Required next implementation steps
 
-1. Define a deterministic Answer Evaluator input/output contract that preserves the raw response and supports accepted alternatives.
-2. Define Diagnostic Classifier output with multiple independent diagnostic records linked to one answer event.
-3. Define Feedback selection by diagnosed Error Pattern.
-4. Extend or adapt Recovery Runtime to select authored cause-specific recovery without editing history or revealing the final answer.
-5. Define an explicit exercise-to-phase mapping and scope for mixed practice / later recall.
-6. Create a versioned machine-readable task export/adapter for the current Content Runtime schema.
-7. Only then run all 32 exercises and record actual learner-response test cases.
+1. Store the exact ZIP (or its nine source documents) in the isolated Core Lab fixture directory and verify the committed bytes against the source archive.
+2. Define a deterministic Answer Evaluator input/output contract that preserves the raw response and supports accepted alternatives.
+3. Define Diagnostic Classifier output with multiple independent diagnostic records linked to one answer event.
+4. Define Feedback selection by diagnosed Error Pattern.
+5. Extend or adapt Recovery Runtime to select authored cause-specific recovery without editing history or revealing the final answer.
+6. Define an explicit exercise-to-phase mapping and scope for mixed practice / later recall.
+7. Create a versioned machine-readable task export/adapter for the current Content Runtime schema.
+8. Only then run all 32 exercises and record actual learner-response test cases.
 
 ## 6. Data integrity rules
 
@@ -107,8 +110,10 @@ The existing generic IndexedDB and event-history tests do not prove that TO BE A
 
 ## 7. Final intake decision
 
-**Accepted:** v1.0.2-draft is accepted as a complete human-readable content fixture for Core Lab intake and further adapter/evaluator design.
+**Structural review:** v1.0.2-draft passes the package-structure and cross-file checks and is suitable for fixture intake.
 
-**Not accepted yet:** full functional execution, answer validation, diagnostic correctness, feedback selection, cause-specific recovery, and complete adaptive sequence.
+**Repository upload:** not completed. The package archive is not present in the repository; only this report is committed.
+
+**Functional execution:** not accepted yet. Answer validation, diagnostic correctness, feedback selection, cause-specific recovery, and complete adaptive sequence remain blocked by missing Core Lab capabilities.
 
 No functional pass is claimed. Keep PR draft; do not merge. No production deployment or learner-facing integration is authorized by this intake.
