@@ -29,3 +29,4 @@ jobs:
           core/persistence-adapter.test.mjs
           core/answer-evaluator.test.mjs
           core/diagnostic-classifier.test.mjs
+          core/content-library-adapter.test.mjs
