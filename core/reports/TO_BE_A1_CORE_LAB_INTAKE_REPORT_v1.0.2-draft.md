@@ -46,17 +46,17 @@ This is a structural/documentation validation. It is not a linguistic certificat
 
 The current Core Lab branch provides deterministic content resolution, task delivery checks, append-only Learning Event recording/reconstruction, generic recovery escalation, and IndexedDB persistence tests.
 
-The current implementation does **not** yet provide the full execution path required by this package:
+The current implementation now includes first-draft generic Answer Evaluator and Diagnostic Classifier modules, but the package-specific execution path is still incomplete:
 
 ### CLAB-TB-CORE-001 — Answer evaluator / accepted-alternative matcher
 `Learning Core submitAnswer()` receives a caller-supplied boolean `correct`. It does not evaluate raw learner responses against per-exercise expected answers and accepted alternatives. `Content Runtime` resolves approved task records but does not evaluate answers.
 
-**Status:** BLOCKED for real answer/alternative testing.
+**Status:** GENERIC MODULE IMPLEMENTED + UNIT TESTED; BLOCKED for package execution until the Markdown-to-runtime adapter supplies authored evaluation descriptors for all 32 exercises.
 
 ### CLAB-TB-CORE-002 — Diagnostic classifier and independent diagnostic records
 The current answer/event contract does not define canonical Error Pattern output or a diagnostic-record event/API that guarantees one record per independent error. D3's five outcomes cannot be verified end-to-end.
 
-**Status:** BLOCKED for package-specific diagnostic testing.
+**Status:** GENERIC MODULE IMPLEMENTED + UNIT TESTED; BLOCKED for package execution until per-exercise diagnostic rules are mapped into the runtime descriptor and connected to event persistence.
 
 ### CLAB-TB-CORE-003 — Feedback selection/runtime
 The package contains authored feedback text, but the current Core Lab does not provide a runtime that selects and emits the matching feedback from the diagnosed cause.
@@ -114,6 +114,6 @@ The existing generic IndexedDB and event-history tests do not prove that TO BE A
 
 **Repository upload:** not completed. The package archive is not present in the repository; only this report is committed.
 
-**Functional execution:** not accepted yet. Answer validation, diagnostic correctness, feedback selection, cause-specific recovery, and complete adaptive sequence remain blocked by missing Core Lab capabilities.
+**Functional execution:** not accepted yet. Generic answer evaluation and diagnostic classification modules now exist with unit tests, but TO BE A1 package execution, feedback selection, cause-specific recovery, and complete adaptive sequence remain unverified.
 
 No functional pass is claimed. Keep PR draft; do not merge. No production deployment or learner-facing integration is authorized by this intake.
