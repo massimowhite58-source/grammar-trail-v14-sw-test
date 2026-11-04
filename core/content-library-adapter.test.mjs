@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { validateToBeA1Package, toRuntimeTask, TO_BE_A1_EXERCISE_IDS } from "./content-library-adapter.mjs";
+import { validateToBeA1Package, toRuntimeTask, TO_BE_A1_EXERCISE_IDS, TO_BE_A1_SOURCE_DOCUMENTS } from "./content-library-adapter.mjs";
 
 const allowedErrorTags = [
   "FORM_AM","FORM_IS","FORM_ARE","FORM_SELECTION","SUBJECT_MAPPING","WORD_ORDER",
@@ -16,7 +16,7 @@ const manifest = {
   contentVersion: "v1.0.2-draft",
   packageStatus: "DRAFT",
   taxonomyVersion: "to-be-a1-taxonomy-v1",
-  sourceDocuments: Array.from({ length: 9 }, (_, i) => ({ path: `source-${i + 1}.md` }))
+  sourceDocuments: TO_BE_A1_SOURCE_DOCUMENTS.map(path => ({ path }))
 };
 function exercise(id) {
   const setId = id[0];
@@ -25,7 +25,7 @@ function exercise(id) {
     learnerPrompt: `Prompt ${id}`, expectedAnswer: `Answer ${id}`,
     acceptedAlternatives: [], errorPatterns: ["FORM_IS"], feedback: "Check the subject.",
     recoveryMapping: [], skillTags: ["RECALL"],
-    source: { documentPath: `SET_${setId}_EXERCISES_AND_ANSWER_FEEDBACK.md`, heading: id }
+    source: { documentPath: `SET_${setId}_EXERCISES_AND_ANSWER_FEEDBACK.md`, heading: `${id} — Test exercise` }
   };
   if (id === "B1") base.parts = [{ partId: "B1-1" }, { partId: "B1-2" }];
   if (id === "D3") base.diagnosticSubrecords = ["D3-01","D3-02","D3-03","D3-04","D3-05"].map(diagnosticId => ({ diagnosticId }));
@@ -85,7 +85,7 @@ test("requires complete source provenance and all nine source documents", () => 
   assert.ok(result.issues.some(x => x.code === "SOURCE_PROVENANCE_MISSING"));
   assert.ok(result.issues.some(x => x.code === "SOURCE_DOCUMENTS_INCOMPLETE"));
 });
-test("never invents phase mapping or promotes draft content for learner delivery", () => {
+test("rejects an incorrect source filename even when the inventory has nine entries", () => {\n  const wrong = { ...manifest, sourceDocuments: manifest.sourceDocuments.map((x, i) => i === 0 ? { path: "OTHER.md" } : x) };\n  const result = validate(exercises(), wrong);\n  assert.ok(result.issues.some(x => x.code === "SOURCE_DOCUMENTS_INCOMPLETE"));\n});\ntest("rejects an exercise mapped to the wrong source document or heading", () => {\n  const items = exercises();\n  items[0].source.heading = "A2 — Wrong heading";\n  const result = validate(items);\n  assert.ok(result.issues.some(x => x.code === "SOURCE_PROVENANCE_MISMATCH"));\n});\ntest("never invents phase mapping or promotes draft content for learner delivery", () => {
   const pkg = validate();
   const noPhase = toRuntimeTask({ validatedPackage: pkg, exerciseId: "A1", knowledgeItemId: "ki-to-be-a1", hypothesisId: "hyp-to-be-a1", approvalState: "APPROVED" });
   assert.equal(noPhase.code, "EXPLICIT_PHASE_MAPPING_REQUIRED");
