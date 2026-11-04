@@ -22,8 +22,19 @@ function normalize(value, rules = {}) {
   if (rules.caseInsensitive === true) out = out.toLocaleLowerCase("en");
   return out;
 }
+function stableValue(value, rules = {}) {
+  const normalized = normalize(value, rules);
+  if (Array.isArray(normalized)) {
+    const items = normalized.map(item => stableValue(item, {}));
+    return rules.unorderedArray === true ? items.sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b))) : items;
+  }
+  if (isObject(normalized)) {
+    return Object.fromEntries(Object.keys(normalized).sort().map(key => [key, stableValue(normalized[key], {})]));
+  }
+  return normalized;
+}
 function equal(actual, expected, rules) {
-  return JSON.stringify(normalize(actual, rules)) === JSON.stringify(normalize(expected, rules));
+  return JSON.stringify(stableValue(actual, rules)) === JSON.stringify(stableValue(expected, rules));
 }
 function validateDescriptor(descriptor) {
   if (!descriptor || !MODES.has(descriptor.mode)) return "EVALUATION_MODE_UNSUPPORTED";
@@ -33,7 +44,7 @@ function validateDescriptor(descriptor) {
   for (const part of descriptor.parts) {
     if (!part || typeof part.partId !== "string" || !part.partId.trim() || ids.has(part.partId)) return "PART_ID_MISSING_OR_DUPLICATE";
     ids.add(part.partId);
-    if (!Array.isArray(part.accepted) || part.accepted.length === 0) return "ACCEPTED_ANSWERS_REQUIRED";
+    if (!Array.isArray(part.accepted) || part.accepted.length === 0 || part.accepted.some(item => !isObject(item) || !Object.hasOwn(item, "value"))) return "ACCEPTED_ANSWERS_REQUIRED";
     if (part.responsePath !== undefined && typeof part.responsePath !== "string") return "RESPONSE_PATH_INVALID";
   }
   return null;
