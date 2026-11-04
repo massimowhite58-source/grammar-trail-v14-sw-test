@@ -6,7 +6,13 @@
  * phase mappings, approve draft content, or invent evaluation rules.
  */
 export const CONTENT_ADAPTER_VERSION = "0.1.0";
-export const TO_BE_A1_SOURCE_DOCUMENTS = Object.freeze([\n  "CHANGELOG_v1.0.2.md", "CORE_LAB_HANDOFF.md",\n  "DIAGNOSTIC_TAXONOMY_AND_RECOVERY_MAP.md", "EXERCISE_BANK_INDEX.md", "README.md",\n  "SET_A_EXERCISES_AND_ANSWER_FEEDBACK.md", "SET_B_EXERCISES_AND_ANSWER_FEEDBACK.md",\n  "SET_C_EXERCISES_AND_ANSWER_FEEDBACK.md", "SET_D_EXERCISES_AND_ANSWER_FEEDBACK.md"\n]);\nexport const TO_BE_A1_EXERCISE_IDS = Object.freeze(
+export const TO_BE_A1_SOURCE_DOCUMENTS = Object.freeze([
+  "CHANGELOG_v1.0.2.md", "CORE_LAB_HANDOFF.md",
+  "DIAGNOSTIC_TAXONOMY_AND_RECOVERY_MAP.md", "EXERCISE_BANK_INDEX.md", "README.md",
+  "SET_A_EXERCISES_AND_ANSWER_FEEDBACK.md", "SET_B_EXERCISES_AND_ANSWER_FEEDBACK.md",
+  "SET_C_EXERCISES_AND_ANSWER_FEEDBACK.md", "SET_D_EXERCISES_AND_ANSWER_FEEDBACK.md"
+]);
+export const TO_BE_A1_EXERCISE_IDS = Object.freeze(
   ["A", "B", "C", "D"].flatMap(set => Array.from({ length: 8 }, (_, i) => set + (i + 1)))
 );
 const RUNTIME_PHASES = new Set(["NEW", "UNDERSTAND", "RECALL", "USE", "MIX", "RECALL_LATER", "STRENGTHEN"]);
