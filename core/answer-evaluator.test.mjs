@@ -30,6 +30,20 @@ test("multi-part exercise remains one exercise with separate part outcomes", () 
   assert.equal(a.taskCorrect, false);
   assert.deepEqual(a.parts.map(p => p.outcome), ["CORRECT", "INCORRECT"]);
 });
+test("matching relations compare object keys deterministically and honor authored unordered arrays", () => {
+  const t = task({ mode: "MATCHING", parts: [part("pairs", [
+    { value: [{ left: "Emma", right: "She" }, { left: "Daniel", right: "He" }] }
+  ], { normalization: { unorderedArray: true } })] });
+  const response = { pairs: [{ right: "He", left: "Daniel" }, { right: "She", left: "Emma" }] };
+  assert.equal(evaluateAnswer({ task: t, response }).taskCorrect, true);
+});
+test("matching array order remains significant unless authored as unordered", () => {
+  const t = task({ mode: "MATCHING", parts: [part("pairs", [
+    { value: [{ left: "Emma", right: "She" }, { left: "Daniel", right: "He" }] }
+  ])] });
+  const response = { pairs: [{ left: "Daniel", right: "He" }, { left: "Emma", right: "She" }] };
+  assert.equal(evaluateAnswer({ task: t, response }).taskCorrect, false);
+});
 test("missing part and unsupported open response fail closed", () => {
   const t = task({ mode: "BLANKS", parts: [part("p1", [{ value: "am" }])] });
   assert.equal(evaluateAnswer({ task: t, response: {} }).status, "REVIEW_REQUIRED");
