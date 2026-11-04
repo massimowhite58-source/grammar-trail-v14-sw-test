@@ -17,6 +17,9 @@ test("B1, D3 and D8 exceptions are explicit profile data", () => {
   assert.deepEqual(profile.specialStructures.D3.requiredTextMarkers, ["D3-01","D3-02","D3-03","D3-04","D3-05"]);
   assert.deepEqual(profile.specialStructures.D8.requiredHeadings, ["Part 1 — Introduce yourself", "Part 2 — Meet another person"]);
 });
+test("D3 authored diagnostic heading is explicitly mapped to the universal errorPatterns field", () => {
+  assert.ok(profile.sectionAliases.errorPatterns.includes("error patterns — five independent diagnostic records"));
+});
 test("profile resolves the exercise family without embedding parser behavior", () => {
   assert.equal(profile.resolveSetId("A4"), "A");
   assert.equal(profile.resolveSetId("D8"), "D");
