@@ -42,8 +42,12 @@ export function validateToBeA1Package({ manifest, exercises, allowedErrorTags })
   if (!manifest || manifest.contentVersion !== "v1.0.2-draft") {
     issues.push(issue("CONTENT_VERSION_MISMATCH", "manifest.contentVersion", "Expected v1.0.2-draft."));
   }
-  if (!manifest || !Array.isArray(manifest.sourceDocuments) || manifest.sourceDocuments.length !== 9) {
-    issues.push(issue("SOURCE_DOCUMENTS_INCOMPLETE", "manifest.sourceDocuments", "Expected all nine source documents in the package inventory."));
+  const actualSourceNames = Array.isArray(manifest?.sourceDocuments)
+    ? manifest.sourceDocuments.map(item => typeof item === "string" ? item : item?.path).sort()
+    : [];
+  const expectedSourceNames = [...TO_BE_A1_SOURCE_DOCUMENTS].sort();
+  if (JSON.stringify(actualSourceNames) !== JSON.stringify(expectedSourceNames)) {
+    issues.push(issue("SOURCE_DOCUMENTS_INCOMPLETE", "manifest.sourceDocuments", "Expected the exact nine source document names from the v1.0.2 package."));
   }
   if (!Array.isArray(allowedErrorTags) || allowedErrorTags.length === 0) {
     issues.push(issue("ERROR_TAXONOMY_REQUIRED", "allowedErrorTags", "Supply the canonical concrete Error Tag allowlist."));
@@ -84,6 +88,11 @@ export function validateToBeA1Package({ manifest, exercises, allowedErrorTags })
     if (!isObject(exercise.source) || typeof exercise.source.documentPath !== "string" ||
         typeof exercise.source.heading !== "string") {
       issues.push(issue("SOURCE_PROVENANCE_MISSING", `${path}.source`, "Each exercise needs source document path and heading."));
+    } else {
+      const expectedDocument = `SET_${exercise.setId}_EXERCISES_AND_ANSWER_FEEDBACK.md`;
+      if (exercise.source.documentPath !== expectedDocument || !exercise.source.heading.startsWith(exercise.exerciseId + " —")) {
+        issues.push(issue("SOURCE_PROVENANCE_MISMATCH", `${path}.source`, "Source document and heading must identify this exercise in its set file."));
+      }
     }
     if (Array.isArray(exercise.errorPatterns) && Array.isArray(allowedErrorTags)) {
       exercise.errorPatterns.forEach((tag, tagIndex) => {
