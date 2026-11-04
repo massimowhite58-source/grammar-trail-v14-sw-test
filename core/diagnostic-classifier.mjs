@@ -18,7 +18,7 @@ function responsePathValue(response, path) {
 
 export function classifyDiagnostics({
   task, rawResponse, evaluation, answerEventId,
-  diagnosticTaxonomyVersion, classifierVersion = DIAGNOSTIC_CLASSIFIER_VERSION
+  diagnosticTaxonomyVersion, allowedErrorTags, classifierVersion = DIAGNOSTIC_CLASSIFIER_VERSION
 }) {
   if (!answerEventId || typeof answerEventId !== "string") {
     return Object.freeze({ status: "REVIEW_REQUIRED", answerEventId: null, records: Object.freeze([]), reason: "ANSWER_EVENT_ID_REQUIRED" });
@@ -26,8 +26,8 @@ export function classifyDiagnostics({
   if (!task?.evaluation || !evaluation || evaluation.status !== "EVALUATED" || !Array.isArray(evaluation.parts)) {
     return Object.freeze({ status: "REVIEW_REQUIRED", answerEventId, records: Object.freeze([]), reason: "VALID_EVALUATION_REQUIRED" });
   }
-  if (!diagnosticTaxonomyVersion || typeof diagnosticTaxonomyVersion !== "string") {
-    return Object.freeze({ status: "REVIEW_REQUIRED", answerEventId, records: Object.freeze([]), reason: "TAXONOMY_VERSION_REQUIRED" });
+  if (!diagnosticTaxonomyVersion || typeof diagnosticTaxonomyVersion !== "string" || !Array.isArray(allowedErrorTags) || allowedErrorTags.length === 0) {
+    return Object.freeze({ status: "REVIEW_REQUIRED", answerEventId, records: Object.freeze([]), reason: "TAXONOMY_VERSION_AND_ALLOWED_TAGS_REQUIRED" });
   }
 
   const records = [];
@@ -45,7 +45,7 @@ export function classifyDiagnostics({
           !["TARGET_HYPOTHESIS", "OUTSIDE_TARGET", "INSTRUCTION", "COMMUNICATION"].includes(rule.scope)) {
         return Object.freeze({ status: "REVIEW_REQUIRED", answerEventId, records: Object.freeze([]), reason: "AUTHORED_DIAGNOSTIC_RULE_INVALID" });
       }
-      if (RESERVED_NON_ERROR_TAGS.has(rule.errorTag)) {
+      if (RESERVED_NON_ERROR_TAGS.has(rule.errorTag) || !allowedErrorTags.includes(rule.errorTag)) {
         return Object.freeze({ status: "REVIEW_REQUIRED", answerEventId, records: Object.freeze([]), reason: "NON_DIAGNOSTIC_TAG_USED_AS_ERROR" });
       }
       const diagnosticId = rule.diagnosticId ?? `${task.taskId}:${partResult.partId}:${rule.errorTag}`;
