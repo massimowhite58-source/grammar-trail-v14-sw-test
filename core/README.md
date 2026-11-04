@@ -51,3 +51,14 @@ Run all suites with: `node --test core/learning-core.test.mjs core/content-runti
 3. Address any failures, then review remaining gaps: storage/quota failure simulation, stable event ordering/pagination, and device scope.
 4. Only after the contract tests are stable, choose and implement the smallest local durable adapter.
 5. Integrate into the main UI only after durable-storage tests are stable.
+
+
+## Universal Content Package pipeline (v0.1 draft)
+
+- `content-package-adapter.mjs` is the shared Markdown ingestion engine for future content families. It parses exercise boundaries, preserves all original sections and source text, validates package inventory against a profile, and leaves semantic evaluation unmapped until authored rules are explicitly supplied.
+- `content-package-adapter.test.mjs` covers the reusable parser and profile-driven ingestion contract.
+- `UNIVERSAL_CONTENT_PACKAGE_CONTRACT_v0.1-draft.md` defines the universal record shape, separation of responsibilities, invariants and repeatable workflow for future grammar, vocabulary, context and communication blocks.
+- `content-profiles/to-be-a1-v1.0.2-draft.mjs` contains TO BE A1-specific inventory and structural rules. B1 remains one two-part exercise; D3 remains one exercise with five separately identified diagnostic subrecords; D8 communication parts remain preserved.
+- New content families should add a profile and semantic mappings, not clone or rewrite the parser, evaluator, classifier, persistence model or shared tests.
+- Current ingestion status: the universal adapter and synthetic contract tests are in place. The actual four TO BE A1 exercise documents still need to be ingested and mapped; no learner delivery is enabled by this parser.
+
