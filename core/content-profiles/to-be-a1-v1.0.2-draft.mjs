@@ -22,6 +22,13 @@ export const TO_BE_A1_V102_PROFILE = Object.freeze({
     "learnerPrompt","expectedAnswer","acceptedAlternatives",
     "errorPatterns","feedback","recoveryMapping","skillTags"
   ],
+  sectionAliases: {
+    errorPatterns: [
+      "error patterns",
+      "diagnostic patterns",
+      "error patterns — five independent diagnostic records"
+    ]
+  },
   specialStructures: {
     B1: { requiredTextMarkers: ["Part 1:", "Part 2:"] },
     D3: { requiredTextMarkers: ["D3-01","D3-02","D3-03","D3-04","D3-05"] },
