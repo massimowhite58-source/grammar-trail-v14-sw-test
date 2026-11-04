@@ -78,7 +78,7 @@ The delivered archive is human-readable Markdown. It does not include a normaliz
 
 **Status:** BLOCKED for direct Content Runtime loading; fixture is available for manual/test-adapter work.
 
-## 4. What can be tested now
+## 4. Current Core contract test evidence\n\nOn commit `881f5674460638d8d5f257c2530c89248ca57e0d`, the expanded Node.js contract workflow passed **84/84 tests** (0 failed), including the new Answer Evaluator and Diagnostic Classifier suites. This validates the generic descriptor-based modules and their unit contracts only; it does not certify the TO BE A1 Markdown package or its 32 exercise mappings.\n\n## 5. What can be tested now
 
 The package can be used for:
 - manual review of all 32 prompts, keys, accepted alternatives, Error Patterns, feedback and recovery rules;
@@ -88,7 +88,7 @@ The package can be used for:
 
 The existing generic IndexedDB and event-history tests do not prove that TO BE A1 content is evaluated correctly. Do not report them as successful TO BE A1 exercise runs.
 
-## 5. Required next implementation steps
+## 6. Required next implementation steps
 
 1. Store the exact ZIP (or its nine source documents) in the isolated Core Lab fixture directory and verify the committed bytes against the source archive.
 2. Define a deterministic Answer Evaluator input/output contract that preserves the raw response and supports accepted alternatives.
@@ -99,7 +99,7 @@ The existing generic IndexedDB and event-history tests do not prove that TO BE A
 7. Create a versioned machine-readable task export/adapter for the current Content Runtime schema.
 8. Only then run all 32 exercises and record actual learner-response test cases.
 
-## 6. Data integrity rules
+## 7. Data integrity rules
 
 - Preserve the original learner response exactly as submitted.
 - Append feedback, diagnostic and recovery events; never rewrite the answer event.
@@ -108,7 +108,7 @@ The existing generic IndexedDB and event-history tests do not prove that TO BE A
 - Do not classify a correct slow answer as incorrect.
 - Keep content version and core/runtime version on test evidence.
 
-## 7. Final intake decision
+## 8. Final intake decision
 
 **Structural review:** v1.0.2-draft passes the package-structure and cross-file checks and is suitable for fixture intake.
 
