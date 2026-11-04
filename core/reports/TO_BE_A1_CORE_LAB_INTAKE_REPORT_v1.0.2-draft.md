@@ -46,17 +46,17 @@ This is a structural/documentation validation. It is not a linguistic certificat
 
 The current Core Lab branch provides deterministic content resolution, task delivery checks, append-only Learning Event recording/reconstruction, generic recovery escalation, and IndexedDB persistence tests.
 
-The current implementation now includes first-draft generic Answer Evaluator and Diagnostic Classifier modules, but the package-specific execution path is still incomplete:
+The current implementation now includes first-draft generic Answer Evaluator, Diagnostic Classifier, and Content Library Adapter modules. The adapter validates a normalized package inventory, source provenance, canonical tags, B1/D3 boundaries, and refuses to infer learning phases or approve draft content. The package-specific exercise records and evaluator descriptors are still incomplete:
 
 ### CLAB-TB-CORE-001 — Answer evaluator / accepted-alternative matcher
 `Learning Core submitAnswer()` receives a caller-supplied boolean `correct`. It does not evaluate raw learner responses against per-exercise expected answers and accepted alternatives. `Content Runtime` resolves approved task records but does not evaluate answers.
 
-**Status:** GENERIC MODULE IMPLEMENTED + UNIT TESTED; BLOCKED for package execution until the Markdown-to-runtime adapter supplies authored evaluation descriptors for all 32 exercises.
+**Status:** GENERIC MODULE IMPLEMENTED + UNIT TESTED; ADAPTER CONTRACT IMPLEMENTED + UNIT TESTED; BLOCKED for package execution until all 32 source exercise records and authored evaluation descriptors are mapped.
 
 ### CLAB-TB-CORE-002 — Diagnostic classifier and independent diagnostic records
 The current answer/event contract does not define canonical Error Pattern output or a diagnostic-record event/API that guarantees one record per independent error. D3's five outcomes cannot be verified end-to-end.
 
-**Status:** GENERIC MODULE IMPLEMENTED + UNIT TESTED; BLOCKED for package execution until per-exercise diagnostic rules are mapped into the runtime descriptor and connected to event persistence.
+**Status:** GENERIC MODULE IMPLEMENTED + UNIT TESTED; ADAPTER VALIDATES CANONICAL TAGS; BLOCKED for package execution until per-exercise diagnostic rules are mapped into descriptors and connected to event persistence.
 
 ### CLAB-TB-CORE-003 — Feedback selection/runtime
 The package contains authored feedback text, but the current Core Lab does not provide a runtime that selects and emits the matching feedback from the diagnosed cause.
@@ -78,7 +78,7 @@ The delivered archive is human-readable Markdown. It does not include a normaliz
 
 **Status:** BLOCKED for direct Content Runtime loading; fixture is available for manual/test-adapter work.
 
-## 4. Current Core contract test evidence\n\nOn commit `881f5674460638d8d5f257c2530c89248ca57e0d`, the expanded Node.js contract workflow passed **84/84 tests** (0 failed), including the new Answer Evaluator and Diagnostic Classifier suites. This validates the generic descriptor-based modules and their unit contracts only; it does not certify the TO BE A1 Markdown package or its 32 exercise mappings.\n\n## 5. What can be tested now
+## 4. Current Core contract test evidence\n\nOn commit `881f5674460638d8d5f257c2530c89248ca57e0d`, the expanded Node.js contract workflow passed **84/84 tests** (0 failed), including the new Answer Evaluator and Diagnostic Classifier suites. This validates the generic descriptor-based modules and their unit contracts only; it does not certify the TO BE A1 Markdown package or its 32 exercise mappings.\n\n## 5. Content Adapter status\n\n`content-library-adapter.mjs` and its tests have been added. It validates the exact 32-ID inventory, nine source-document inventory, source provenance, concrete diagnostic tags, B1 as one exercise with two parts, and D3 as one exercise with five ordered diagnostic subrecords. It will not infer phase assignments, approve draft content, or permit learner delivery without an explicit evaluation descriptor. This is a generic adapter contract tested with synthetic fixtures; the actual nine-document package has not yet been converted into 32 normalized records.\n\n## 6. What can be tested now
 
 The package can be used for:
 - manual review of all 32 prompts, keys, accepted alternatives, Error Patterns, feedback and recovery rules;
@@ -88,7 +88,7 @@ The package can be used for:
 
 The existing generic IndexedDB and event-history tests do not prove that TO BE A1 content is evaluated correctly. Do not report them as successful TO BE A1 exercise runs.
 
-## 6. Required next implementation steps
+## 7. Required next implementation steps
 
 1. Store the exact ZIP (or its nine source documents) in the isolated Core Lab fixture directory and verify the committed bytes against the source archive.
 2. Define a deterministic Answer Evaluator input/output contract that preserves the raw response and supports accepted alternatives.
@@ -99,7 +99,7 @@ The existing generic IndexedDB and event-history tests do not prove that TO BE A
 7. Create a versioned machine-readable task export/adapter for the current Content Runtime schema.
 8. Only then run all 32 exercises and record actual learner-response test cases.
 
-## 7. Data integrity rules
+## 8. Data integrity rules
 
 - Preserve the original learner response exactly as submitted.
 - Append feedback, diagnostic and recovery events; never rewrite the answer event.
@@ -108,7 +108,7 @@ The existing generic IndexedDB and event-history tests do not prove that TO BE A
 - Do not classify a correct slow answer as incorrect.
 - Keep content version and core/runtime version on test evidence.
 
-## 8. Final intake decision
+## 9. Final intake decision
 
 **Structural review:** v1.0.2-draft passes the package-structure and cross-file checks and is suitable for fixture intake.
 
