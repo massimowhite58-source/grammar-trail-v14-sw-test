@@ -85,7 +85,18 @@ test("requires complete source provenance and all nine source documents", () => 
   assert.ok(result.issues.some(x => x.code === "SOURCE_PROVENANCE_MISSING"));
   assert.ok(result.issues.some(x => x.code === "SOURCE_DOCUMENTS_INCOMPLETE"));
 });
-test("rejects an incorrect source filename even when the inventory has nine entries", () => {\n  const wrong = { ...manifest, sourceDocuments: manifest.sourceDocuments.map((x, i) => i === 0 ? { path: "OTHER.md" } : x) };\n  const result = validate(exercises(), wrong);\n  assert.ok(result.issues.some(x => x.code === "SOURCE_DOCUMENTS_INCOMPLETE"));\n});\ntest("rejects an exercise mapped to the wrong source document or heading", () => {\n  const items = exercises();\n  items[0].source.heading = "A2 — Wrong heading";\n  const result = validate(items);\n  assert.ok(result.issues.some(x => x.code === "SOURCE_PROVENANCE_MISMATCH"));\n});\ntest("never invents phase mapping or promotes draft content for learner delivery", () => {
+test("rejects an incorrect source filename even when the inventory has nine entries", () => {
+  const wrong = { ...manifest, sourceDocuments: manifest.sourceDocuments.map((x, i) => i === 0 ? { path: "OTHER.md" } : x) };
+  const result = validate(exercises(), wrong);
+  assert.ok(result.issues.some(x => x.code === "SOURCE_DOCUMENTS_INCOMPLETE"));
+});
+test("rejects an exercise mapped to the wrong source document or heading", () => {
+  const items = exercises();
+  items[0].source.heading = "A2 — Wrong heading";
+  const result = validate(items);
+  assert.ok(result.issues.some(x => x.code === "SOURCE_PROVENANCE_MISMATCH"));
+});
+test("never invents phase mapping or promotes draft content for learner delivery", () => {
   const pkg = validate();
   const noPhase = toRuntimeTask({ validatedPackage: pkg, exerciseId: "A1", knowledgeItemId: "ki-to-be-a1", hypothesisId: "hyp-to-be-a1", approvalState: "APPROVED" });
   assert.equal(noPhase.code, "EXPLICIT_PHASE_MAPPING_REQUIRED");
