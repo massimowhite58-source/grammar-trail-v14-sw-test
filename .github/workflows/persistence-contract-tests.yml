@@ -26,4 +26,6 @@ jobs:
           core/task-runtime.test.mjs
           core/recovery-runtime.test.mjs
           core/integration.test.mjs
-          core/persistence-adapter.test.mjs\n          core/answer-evaluator.test.mjs\n          core/diagnostic-classifier.test.mjs
+          core/persistence-adapter.test.mjs
+          core/answer-evaluator.test.mjs
+          core/diagnostic-classifier.test.mjs
