@@ -117,3 +117,14 @@ The existing generic IndexedDB and event-history tests do not prove that TO BE A
 **Functional execution:** not accepted yet. Generic answer evaluation and diagnostic classification modules now exist with unit tests, but TO BE A1 package execution, feedback selection, cause-specific recovery, and complete adaptive sequence remain unverified.
 
 No functional pass is claimed. Keep PR draft; do not merge. No production deployment or learner-facing integration is authorized by this intake.
+
+
+## Universal Content Package pipeline update
+
+The work has been generalized beyond TO BE A1. A reusable Markdown ingestion module, `content-package-adapter.mjs`, now parses exercise headings and preserves every authored section (including non-standard subparts) and source provenance. A package profile supplies expected IDs, source documents, required sections and declared structural exceptions. The TO BE A1 profile is stored separately under `core/content-profiles/`; it is configuration, not a fork of the parser.
+
+The universal adapter is deliberately separate from semantic grading. It does not infer accepted answers, evaluation rules, diagnostics, feedback, recovery, hypotheses or phases from Markdown prose. Those mappings remain explicit and versioned. Draft content remains non-deliverable.
+
+The updated CI workflow passed **106/106 Node.js contract tests** on commit `34adaafc669f5e516a718b7d6c17d9767dc15cbf`. The browser IndexedDB smoke workflow for the same commit was still running at the time this report was updated. These tests validate the generic parser using synthetic fixtures; the actual TO BE A1 documents have been independently inspected for 32 unique IDs and required sections, but have not yet been run through the repository adapter as a committed fixture.
+
+Future content blocks should require only a profile plus authored semantic mappings; they should reuse the universal parser, Answer Evaluator, Diagnostic Classifier, event model and shared CI suites.
