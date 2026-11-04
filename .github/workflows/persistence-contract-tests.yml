@@ -31,3 +31,4 @@ jobs:
           core/diagnostic-classifier.test.mjs
           core/content-library-adapter.test.mjs
           core/content-package-adapter.test.mjs
+          core/content-profiles/to-be-a1-v1.0.2-draft.test.mjs
