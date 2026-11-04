@@ -30,3 +30,4 @@ jobs:
           core/answer-evaluator.test.mjs
           core/diagnostic-classifier.test.mjs
           core/content-library-adapter.test.mjs
+          core/content-package-adapter.test.mjs
