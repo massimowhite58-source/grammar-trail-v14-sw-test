@@ -1,0 +1,39 @@
+name: IndexedDB browser smoke tests
+
+on:
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  indexeddb-browser-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install Playwright
+        run: |
+          npm init -y
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Serve repository over HTTP
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/grammar-trail-http.log 2>&1 &
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:4173/core/indexeddb-browser-smoke-test.html > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/grammar-trail-http.log
+          exit 1
+      - name: Run native IndexedDB smoke tests in Chromium
+        run: node core/indexeddb-browser-smoke.test.cjs
