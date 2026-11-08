@@ -96,8 +96,8 @@ These are descriptive families only. They do not authorize mapping every family 
 
 ## 8. Unresolved before UI implementation
 
-1. Exact blank/item counts and boundaries for D1, D2, D5, and D6 need a second layout-level inspection.
-2. C5 correction boundaries need explicit confirmation.
+1. Counts are confirmed: D1 has 4 gaps, D2 has 7 gaps, D5 has 4 questions, D6 has 4 question/answer pairs, and C5 has 4 correction items.
+2. The number of response units is known; the exact control grouping (separate fields vs combined field) remains a UI/response-contract decision.
 3. A4, B4, and C5 correction field granularity must be observed against the source's complete exercise presentation.
 4. Whether sentence-order tasks use draggable tokens or full-sentence text entry is a UI design decision, not specified by the inventory.
 5. Stable part and option IDs do not yet exist as an approved UI contract.
