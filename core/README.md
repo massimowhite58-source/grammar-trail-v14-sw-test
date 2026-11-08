@@ -50,7 +50,7 @@ One active Knowledge Item and one main hypothesis per task. The phase advances o
 - `persistence-adapter.mjs` / `persistence-adapter.test.mjs` — in-memory contract test double and persistence acceptance tests.
 - `../core-demo.html` — isolated browser exercise for manual end-to-end checks.
 
-Run all suites with: `node --test core/learning-core.test.mjs core/content-runtime.test.mjs core/task-runtime.test.mjs core/recovery-runtime.test.mjs core/integration.test.mjs core/persistence-adapter.test.mjs core/answer-evaluator.test.mjs core/diagnostic-classifier.test.mjs`.
+Run all suites with: `node --test core/learning-core.test.mjs core/content-runtime.test.mjs core/task-runtime.test.mjs core/recovery-runtime.test.mjs core/integration.test.mjs core/persistence-adapter.test.mjs core/answer-evaluator.test.mjs core/diagnostic-classifier.test.mjs core/to-be-a1-set-a-answer-mapping.test.mjs core/to-be-a1-set-b-answer-mapping.test.mjs`.
 
 ## Next
 1. Run the expanded Node.js test command, including `persistence-adapter.test.mjs`.
