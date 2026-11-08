@@ -48,7 +48,7 @@
 | C2 | Put words in order to form three questions | Three sentence-construction responses | Full sentence or token ordering? |
 | C3 | Match three questions to three answers | Three matching pairs | Stable item identities and pair serialization required. |
 | C4 | Give three short answers using supplied cues | Three short-answer responses | Are answers captured independently? |
-| C5 | Find and correct mistakes in a set of question forms | Sentence correction; multiple items | Confirm exact number and boundaries of response units from source layout before rendering. |
+| C5 | Correct four standard questions | Four sentence corrections | Four separately addressable full-sentence corrections; source gives four numbered items. |
 | C6 | Use a profile to write four questions about a person | Four sentence-production responses | Separate fields or one combined response? Preserve each question. |
 | C7 | Complete two gaps in a dialogue | Two separately addressable blanks | Capture each gap independently and retain dialogue context. |
 | C8 | Write a short dialogue containing several required conversational moves | Open response / dialogue | Preserve full raw dialogue; no inferred scoring. |
@@ -57,12 +57,12 @@
 
 | ID | Prompt structure observed | Apparent response shape | UI questions to resolve |
 |---|---|---|---|
-| D1 | Complete multiple sentences with the correct form of to be | Multi-blank completion | Confirm exact blank count and item boundaries from the complete source prompt. |
-| D2 | Complete a conversation using bracketed information | Dialogue completion; likely multiple response units | Confirm exact blank count, whether each gap is separately keyed, and whether full turns are captured. |
+| D1 | Complete four numbered sentences/questions with to be | Four separately addressable blanks | One response per numbered gap; preserve question word order context. |
+| D2 | Complete a dialogue containing seven gaps | Seven separately addressable blanks in dialogue context | One raw value per gap; retain speaker/turn context. |
 | D3 | Correct five mistakes in a short message | Five independent corrections | The source explicitly calls for five independent diagnostic records; UI must preserve five separately addressable corrections. |
 | D4 | Build four sentences from supplied facts | Four sentence-production responses | Separate full-sentence capture is preferred only if the source layout supports it; verify before implementation. |
-| D5 | Read a short text and answer questions | Multiple comprehension responses | Confirm exact question count and answer formats from the full prompt. |
-| D6 | Ask and answer questions from a profile | Multi-part question-and-short-answer task | Confirm exact number and grouping of question/answer pairs; likely composite response. |
+| D5 | Read a short text and answer four questions | Four short-answer/comprehension responses | Four separately addressable answers; do not classify as grammar construction by default. |
+| D6 | Write four questions and a short answer for each, using a profile | Four question-and-answer pairs (eight response components if captured separately) | Preserve question/answer pairing and pair identity; source lists four prompts. |
 | D7 | Write a short conversation with a new neighbour | Open response / dialogue | Preserve full raw dialogue; no inferred scoring. |
 | D8 | Complete two parts: personal introduction and meeting another person | Two-part open response | Preserve each part separately if the UI presents them sequentially; retain both raw texts. |
 
@@ -106,4 +106,16 @@ These are descriptive families only. They do not authorize mapping every family 
 
 ## 9. Next action
 
-Perform a layout-level read of the unresolved source prompts and define a separate, versioned UI manifest containing only stable structural identities and source references. Then implement the static faithful renderer and raw-response inspector. Do not add correctness or diagnostics during that increment.
+The layout-level read has now confirmed the response-unit counts noted above. Next, define a separate, versioned UI manifest containing only stable structural identities and source references. Then implement the static faithful renderer and raw-response inspector. Do not add correctness or diagnostics during that increment.
+
+
+## 10. Supplemental layout-level confirmation
+
+A second read of the complete learner-prompt sections confirmed:
+- **C5:** four numbered question-correction items.
+- **D1:** four numbered gaps.
+- **D2:** seven dialogue gaps.
+- **D5:** four comprehension questions.
+- **D6:** four question-and-answer pairs, each tied to one profile prompt.
+
+This resolves the earlier count uncertainties only. It does not determine whether each response should be collected in separate controls or one combined field; that remains a renderer/response-contract decision. No answer keys or diagnostic sections were used to infer UI control behavior.
