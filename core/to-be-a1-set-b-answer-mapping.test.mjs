@@ -135,20 +135,30 @@ test("B6 standard short contractions are the accepted transformation outputs", (
   assert.equal(evaluation.outcome, "CORRECT");
 });
 
-test("B6 authored full-form response is an instruction-following issue, not a grammar diagnosis", () => {
-  const t = task("B6", "MULTI_PART", [
-    part("transformation_1", ["He isn't a teacher."], [
-      rule("B6-INSTRUCTION-FOLLOWING", "INSTRUCTION_FOLLOWING", "transformation_1", { operator: "equals", value: "He is not a teacher." }, "B6")
-    ])
-  ]);
+test("B6 full form remains grammatically correct while failing the short-form instruction", () => {
+  const t = task("B6", "MULTI_PART", [{
+    partId: "transformation_1", responsePath: "transformation_1", primaryAxis: "grammar",
+    axes: {
+      grammar: { accepted: [{ alternativeId: "full", value: "He is not a teacher." }, { alternativeId: "short", value: "He isn't a teacher." }] },
+      instruction: { accepted: [{ alternativeId: "short-only", value: "He isn't a teacher." }] }
+    },
+    diagnostics: [
+      { ...rule("B6-INSTRUCTION-FOLLOWING", "INSTRUCTION_FOLLOWING", "transformation_1", { operator: "equals", value: "He is not a teacher." }, "B6"), axis: "instruction" }
+    ]
+  }]);
   const response = { transformation_1: "He is not a teacher." };
   const evaluation = evaluateAnswer({ task: t, response });
   const d = classify(t, response, evaluation, ["INSTRUCTION_FOLLOWING"]);
-  assert.equal(evaluation.outcome, "INCORRECT");
+  assert.equal(evaluation.outcome, "CORRECT");
+  assert.equal(evaluation.parts[0].axes.grammar.outcome, "CORRECT");
+  assert.equal(evaluation.parts[0].axes.instruction.outcome, "INCORRECT");
+  assert.equal(evaluation.dimensions.grammar.outcome, "CORRECT");
+  assert.equal(evaluation.dimensions.instruction.outcome, "INCORRECT");
+  assert.equal(d.records.length, 1);
+  assert.equal(d.records[0].axis, "instruction");
   assert.equal(d.records[0].errorTag, "INSTRUCTION_FOLLOWING");
   assert.equal(d.records[0].scope, "INSTRUCTION");
 });
-
 test("B7 and B8 stay review-required without deterministic open-response rubrics", () => {
   const b7 = task("B7", "OPEN_RESPONSE", []);
   const b8 = task("B8", "OPEN_RESPONSE", []);
