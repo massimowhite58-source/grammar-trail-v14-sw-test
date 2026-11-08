@@ -1,8 +1,8 @@
 /**
- * Grammar Trail Diagnostic Classifier v0.2
+ * Grammar Trail Diagnostic Classifier v0.3
  * Applies only explicit, deterministic, authored conditions to raw response evidence.
  */
-export const DIAGNOSTIC_CLASSIFIER_VERSION = "0.2.0";
+export const DIAGNOSTIC_CLASSIFIER_VERSION = "0.3.0";
 
 const RESERVED_NON_ERROR_TAGS = new Set([
   "GRAMMAR_ACCURACY", "COMMUNICATION_COMPLETION", "CONTEXT_TRANSFER", "MIXED_FORM_SELECTION"
@@ -65,8 +65,10 @@ export function classifyDiagnostics({
   const records = [];
   const seen = new Set();
   for (const partResult of evaluation.parts) {
-    if (partResult.outcome === "REVIEW_REQUIRED") return review(answerEventId, "PART_EVALUATION_REQUIRES_REVIEW");
-    if (partResult.outcome !== "INCORRECT") continue;
+    if (Object.values(partResult.axes ?? { answer: { outcome: partResult.outcome } })
+      .some(axisResult => axisResult.outcome === "REVIEW_REQUIRED")) {
+      return review(answerEventId, "PART_EVALUATION_REQUIRES_REVIEW");
+    }
     const descriptorPart = task.evaluation.parts.find(part => part.partId === partResult.partId);
     if (!descriptorPart || !Array.isArray(descriptorPart.diagnostics)) {
       return review(answerEventId, "AUTHORED_DIAGNOSTIC_RULES_MISSING");
@@ -84,6 +86,11 @@ export function classifyDiagnostics({
       }
       if (seen.has(rule.diagnosticId)) return review(answerEventId, "DUPLICATE_DIAGNOSTIC_ID");
       seen.add(rule.diagnosticId);
+      const axisName = rule.axis ?? partResult.primaryAxis ?? "answer";
+      const axisResult = partResult.axes?.[axisName] ??
+        (axisName === "answer" ? { outcome: partResult.outcome } : null);
+      if (!axisResult) return review(answerEventId, "DIAGNOSTIC_AXIS_UNKNOWN");
+      if (axisResult.outcome !== "INCORRECT") continue;
       const observed = readPath(rawResponse, rule.responsePath);
       if (observed === undefined) return review(answerEventId, "DIAGNOSTIC_EVIDENCE_MISSING");
       if (!matchesCondition(observed, rule.when)) continue;
@@ -93,6 +100,7 @@ export function classifyDiagnostics({
         taskId: task.taskId,
         partId: partResult.partId,
         errorTag: rule.errorTag,
+        axis: axisName,
         evidence: Object.freeze({
           responsePath: rule.responsePath,
           observedValue: observed,
