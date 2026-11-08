@@ -192,6 +192,24 @@ test("B6 keeps grammar and instruction outcomes independent across all three tra
   assert.equal(malformedDiagnostics.records[0].axis, "grammar");
   assert.equal(malformedDiagnostics.records[0].errorTag, "NEGATIVE_CONTRACTION");
 });
+test("required assessment axes fail closed when a part does not define them", () => {
+  const t = task("B6-invalid", "MULTI_PART", [part("response", ["accepted"])]);
+  t.evaluation.requiredAxes = ["grammar"];
+  const evaluation = evaluateAnswer({ task: t, response: { response: "accepted" } });
+  assert.equal(evaluation.status, "REVIEW_REQUIRED");
+  assert.equal(evaluation.reason, "REQUIRED_AXIS_MISSING_FROM_PART");
+});
+
+test("multi-axis parts require an explicit primary axis unless they declare answer", () => {
+  const t = task("B6-invalid-primary", "MULTI_PART", [{
+    partId: "response", responsePath: "response",
+    axes: { grammar: { accepted: [{ value: "accepted" }] } }
+  }]);
+  const evaluation = evaluateAnswer({ task: t, response: { response: "accepted" } });
+  assert.equal(evaluation.status, "REVIEW_REQUIRED");
+  assert.equal(evaluation.reason, "PRIMARY_AXIS_UNKNOWN");
+});
+
 test("B7 and B8 stay review-required without deterministic open-response rubrics", () => {
   const b7 = task("B7", "OPEN_RESPONSE", []);
   const b8 = task("B8", "OPEN_RESPONSE", []);
