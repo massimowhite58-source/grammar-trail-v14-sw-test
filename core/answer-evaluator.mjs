@@ -65,9 +65,11 @@ function validateDescriptor(descriptor) {
         if (!axis.trim() || !isObject(axisDescriptor) || !validateAccepted(axisDescriptor.accepted)) return "ASSESSMENT_AXIS_DESCRIPTOR_INVALID";
       }
       if (part.primaryAxis !== undefined && !Object.hasOwn(part.axes, part.primaryAxis)) return "PRIMARY_AXIS_UNKNOWN";
+      if (part.primaryAxis === undefined && !Object.hasOwn(part.axes, "answer")) return "PRIMARY_AXIS_UNKNOWN";
       if (descriptor.requiredAxes?.some(axis => !Object.hasOwn(part.axes, axis))) return "REQUIRED_AXIS_MISSING_FROM_PART";
-    } else if (!validateAccepted(part.accepted)) {
-      return "ACCEPTED_ANSWERS_REQUIRED";
+    } else {
+      if (descriptor.requiredAxes?.length) return "REQUIRED_AXIS_MISSING_FROM_PART";
+      if (!validateAccepted(part.accepted)) return "ACCEPTED_ANSWERS_REQUIRED";
     }
   }
   return null;
