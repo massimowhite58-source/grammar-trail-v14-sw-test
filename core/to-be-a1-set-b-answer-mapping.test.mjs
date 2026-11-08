@@ -154,6 +154,7 @@ test("B6 keeps grammar and instruction outcomes independent across all three tra
       { ...rule("B6-NEGATIVE-CONTRACTION", "NEGATIVE_CONTRACTION", "transformation_3", { operator: "equals", value: "I amn't from Italy." }, "B6"), axis: "grammar" }
     ])
   ]);
+  t.evaluation.requiredAxes = ["grammar", "instruction"];
 
   const fullResponse = {
     transformation_1: "He is not a teacher.",
@@ -163,6 +164,7 @@ test("B6 keeps grammar and instruction outcomes independent across all three tra
   const fullEvaluation = evaluateAnswer({ task: t, response: fullResponse });
   const fullDiagnostics = classify(t, fullResponse, fullEvaluation, ["INSTRUCTION_FOLLOWING", "NEGATIVE_CONTRACTION"]);
   assert.equal(fullEvaluation.outcome, "CORRECT");
+  assert.equal(fullEvaluation.taskSatisfied, false);
   assert.equal(fullEvaluation.dimensions.grammar.outcome, "CORRECT");
   assert.equal(fullEvaluation.dimensions.instruction.outcome, "INCORRECT");
   assert.equal(fullDiagnostics.records.length, 3);
@@ -177,11 +179,13 @@ test("B6 keeps grammar and instruction outcomes independent across all three tra
   const shortDiagnostics = classify(t, shortResponse, shortEvaluation, ["INSTRUCTION_FOLLOWING", "NEGATIVE_CONTRACTION"]);
   assert.equal(shortEvaluation.dimensions.grammar.outcome, "CORRECT");
   assert.equal(shortEvaluation.dimensions.instruction.outcome, "CORRECT");
+  assert.equal(shortEvaluation.taskSatisfied, true);
   assert.equal(shortDiagnostics.status, "NO_DIAGNOSTIC");
 
   const malformedResponse = { ...shortResponse, transformation_3: "I amn't from Italy." };
   const malformedEvaluation = evaluateAnswer({ task: t, response: malformedResponse });
   const malformedDiagnostics = classify(t, malformedResponse, malformedEvaluation, ["INSTRUCTION_FOLLOWING", "NEGATIVE_CONTRACTION"]);
+  assert.equal(malformedEvaluation.taskSatisfied, false);
   assert.equal(malformedEvaluation.parts[2].axes.grammar.outcome, "INCORRECT");
   assert.equal(malformedEvaluation.parts[2].axes.instruction.outcome, "INCORRECT");
   assert.equal(malformedDiagnostics.records.length, 1);
