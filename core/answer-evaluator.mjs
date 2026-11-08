@@ -20,7 +20,7 @@ function normalize(value, rules = {}) {
   if (rules.trim === true) out = out.trim();
   if (rules.collapseInternalWhitespace === true) out = out.replace(/\s+/g, " ");
   if (rules.caseInsensitive === true) out = out.toLocaleLowerCase("en");
-  if (rules.ignorePunctuation === true) out = out.replace(/\\p{P}/gu, "");
+  if (rules.ignorePunctuation === true) out = out.replace(/\p{P}/gu, "");
   return out;
 }
 function stableValue(value, rules = {}) {
