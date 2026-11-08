@@ -161,7 +161,9 @@ test("B6 keeps grammar and instruction outcomes independent across all three tra
     transformation_2: "They are not at home.",
     transformation_3: "I am not from Italy."
   };
+  const fullResponseBefore = JSON.stringify(fullResponse);
   const fullEvaluation = evaluateAnswer({ task: t, response: fullResponse });
+  assert.equal(JSON.stringify(fullResponse), fullResponseBefore);
   const fullDiagnostics = classify(t, fullResponse, fullEvaluation, ["INSTRUCTION_FOLLOWING", "NEGATIVE_CONTRACTION"]);
   assert.equal(fullEvaluation.outcome, "CORRECT");
   assert.equal(fullEvaluation.taskSatisfied, false);
