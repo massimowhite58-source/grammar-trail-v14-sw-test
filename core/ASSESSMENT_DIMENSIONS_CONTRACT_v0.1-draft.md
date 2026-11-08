@@ -92,6 +92,6 @@ Before a content block can use multiple axes:
 ## 7. Current limitations
 
 - Evaluator v0.2 and classifier v0.3 implement independent axis evaluation and axis-scoped diagnostics.
-- The Set B B6 test currently proves one full-form example only. Complete descriptors and tests for all three B6 transformations remain outstanding.
+- The Set B B6 tests cover all three transformations: full forms pass the grammar axis but fail the instruction axis; short forms pass both; the authored non-standard contraction fails the grammar axis.
 - The current evaluator does not infer semantic grammar correctness. Each axis still requires explicit authored accepted values or a future explicitly supported rubric.
 - No learner UI, progress formula, or Runtime persistence integration is added by this contract.
