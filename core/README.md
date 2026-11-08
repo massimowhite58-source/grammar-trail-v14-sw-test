@@ -5,13 +5,17 @@
 - **Implemented:** isolated browser laboratory at `../core-demo.html`.
 - **Implemented:** `content-runtime.mjs` — approval/version checks, validated content package, exact-version local fallback, and non-blocking operational events.
 - **Implemented:** `task-runtime.mjs` — delivery Quality Gate for approved content, version/phase/hypothesis consistency, mandatory User State, safety block, and premature-MIX prevention.
-- **Implemented:** `recovery-runtime.mjs` — bounded, deterministic recovery ladder that preserves the target, never edits correctness/history, blocks unsafe states, and can recommend a pause instead of escalating forever.\n- **Implemented (v0.2 draft):** `answer-evaluator.mjs` — deterministic authored-answer evaluator with independent assessment axes per response part; legacy single-axis descriptors remain compatible; unsupported open responses fail closed.\n- **Implemented (v0.3 draft):** `diagnostic-classifier.mjs` — evaluates explicit authored diagnostic rules against their declared assessment axis; separate records link to the persisted answer event.\n- **Implemented (v0.1 draft):** `content-library-adapter.mjs` — validates a structured TO BE A1 package inventory, source provenance, canonical error tags, B1/D3 internal structures, and requires explicit phase/approval/evaluation mapping before learner delivery.
+- **Implemented:** `recovery-runtime.mjs` — bounded, deterministic recovery ladder that preserves the target, never edits correctness/history, blocks unsafe states, and can recommend a pause instead of escalating forever.
+- **Implemented (v0.2 draft):** `answer-evaluator.mjs` — deterministic authored-answer evaluator with independent assessment axes per response part; legacy single-axis descriptors remain compatible; unsupported open responses fail closed.
+- **Implemented (v0.3 draft):** `diagnostic-classifier.mjs` — evaluates explicit authored diagnostic rules against their declared assessment axis; separate records link to the persisted answer event.
+- **Implemented (v0.1 draft):** `content-library-adapter.mjs` — validates a structured TO BE A1 package inventory, source provenance, canonical error tags, B1/D3 internal structures, and requires explicit phase/approval/evaluation mapping before learner delivery.
 - **Design system:** `../GRAMMAR_TRAIL_DESIGN_SYSTEM.md` records Core Lab as the visual reference; question prompts now use navy, semibold 19.2 px text with increased line-height, and explanation text is larger and darker.
 - **Persistence boundary:** `PERSISTENCE_CONTRACT.md` defines immutable Learning Events, mutable scoped User Facts, independent approved/versioned Content Cache, rebuildable snapshots, and acceptance criteria.
 - **Persistence test double:** `persistence-adapter.mjs` provides in-memory event, User Fact, snapshot, and Content Cache operations for contract tests only. Cache cleanup is isolated from events and User Facts. It is not durable storage and is not connected to the UI.
 - **Persistence validation:** GitHub Actions confirmed 52/52 tests passed on commit `5bb040335611f9399ddc9e8c6d5e05e4ffd193d7`, including the expanded User Fact and Content Cache cases. This validates the in-memory test double only; it does not validate durable storage or physical-device behavior.
 - **Tested:** 8 Content Runtime tests and 8 Task Runtime tests, in addition to 9 learning-core tests.
-- **Tested:** Node.js built-in unit suite; 34 tests passed on 2026-10-27 across the learning core, Content Runtime, Task Runtime, and Recovery Runtime.\n- **New tests added:** `answer-evaluator.test.mjs` and `diagnostic-classifier.test.mjs`; CI inclusion is being verified.
+- **Tested:** Node.js built-in unit suite; 34 tests passed on 2026-10-27 across the learning core, Content Runtime, Task Runtime, and Recovery Runtime.
+- **New tests added:** `answer-evaluator.test.mjs` and `diagnostic-classifier.test.mjs`; CI inclusion is being verified.
 - **Integration coverage:** `integration.test.mjs` exercises the chain Content Runtime → Task Runtime → Learning Core → Recovery Runtime, including immutable event validation and fail-closed safety/version gates. Four integration tests are included; all 38 tests passed in the latest run.
 - **Not yet integrated:** main Grammar Trail learning UI and existing progress model.
 - **Not yet production-ready:** durable persistence adapter, event migration/sync, full User State runtime, evidence calibration, review scheduling, Knowledge Map gating, accessibility QA, and release hardening.
@@ -37,7 +41,10 @@ One active Knowledge Item and one main hypothesis per task. The phase advances o
 - `learning-core.test.mjs` — core invariants.
 - `content-runtime.mjs` / `content-runtime.test.mjs` — content resolution, eligibility, fallback, and observability.
 - `task-runtime.mjs` / `task-runtime.test.mjs` — delivery Quality Gate.
-- `recovery-runtime.mjs` / `recovery-runtime.test.mjs` — bounded recovery decisions.\n- `answer-evaluator.mjs` / `answer-evaluator.test.mjs` — deterministic authored-answer matching.\n- `diagnostic-classifier.mjs` / `diagnostic-classifier.test.mjs` — separate, evidence-linked diagnostic records.\n- `content-library-adapter.mjs` / `content-library-adapter.test.mjs` — structured package validation and explicit Content Runtime task mapping.
+- `recovery-runtime.mjs` / `recovery-runtime.test.mjs` — bounded recovery decisions.
+- `answer-evaluator.mjs` / `answer-evaluator.test.mjs` — deterministic authored-answer matching.
+- `diagnostic-classifier.mjs` / `diagnostic-classifier.test.mjs` — separate, evidence-linked diagnostic records.
+- `content-library-adapter.mjs` / `content-library-adapter.test.mjs` — structured package validation and explicit Content Runtime task mapping.
 - `integration.test.mjs` — end-to-end contracts across all four runtime modules.
 - `PERSISTENCE_CONTRACT.md` — durable-storage boundary and acceptance criteria.
 - `persistence-adapter.mjs` / `persistence-adapter.test.mjs` — in-memory contract test double and persistence acceptance tests.
@@ -67,7 +74,7 @@ Run all suites with: `node --test core/learning-core.test.mjs core/content-runti
 ## Independent assessment dimensions (v0.1 draft)
 
 - `ASSESSMENT_DIMENSIONS_CONTRACT_v0.1-draft.md` defines how one response can be assessed independently for grammar, instruction compliance, and future explicitly authored dimensions without collapsing them into one correctness flag.
-- Evaluator v0.2 supports per-part `axes`, independent accepted alternatives, `primaryAxis`, per-part axis outcomes, and aggregate `evaluation.dimensions`. Existing descriptors without axes use the backward-compatible `answer` axis.
+- Evaluator v0.2 supports per-part `axes`, independent accepted alternatives, `primaryAxis`, per-part axis outcomes, aggregate `evaluation.dimensions`, and task-level `requiredAxes` / `taskSatisfied`. Existing descriptors without axes use the backward-compatible `answer` axis and retain legacy task completion behavior.
 - Diagnostic classifier v0.3 supports `rule.axis`. A rule is considered only when its own axis is incorrect; an instruction diagnostic can therefore be emitted while the grammar axis remains correct.
 - Set B B6 tests now cover all three transformations: full forms are grammatically correct but fail the requested-short-form instruction; contracted forms satisfy both axes; the authored non-standard form `I amn't` is diagnosed on the grammar axis.
 - This remains evaluator-level behavior only. Actual UI payloads, complete content descriptors, hypothesis/phase mapping, feedback/recovery references, and learner-facing progress behavior are not verified or enabled.
