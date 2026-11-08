@@ -84,3 +84,10 @@ Run all suites with: `node --test core/learning-core.test.mjs core/content-runti
 
 - `TO_BE_A1_UI_RESPONSE_SHAPE_AUDIT_v0.1-draft.md` records that the current `core-demo.html` is a Present Simple demonstration. It submits choice payloads as `{ selectedIndex, selectedText }` and text payloads as `{ text }`, computes correctness in the caller, and does not invoke the new Answer Evaluator.
 - Consequently, B1–B8 part IDs and response paths remain unverified until the actual TO BE A1 learner interface is available. No UI wiring was changed.
+
+
+## Canonical learner response boundary (v0.1 draft)
+
+- `LEARNER_RESPONSE_CONTRACT_v0.1-draft.md` proposes a UI-independent immutable response envelope keyed by approved stable part IDs. The UI records raw input; the evaluator calculates correctness; Learning Core must not trust a caller-supplied correctness boolean.
+- The contract defines serialization expectations for CHOICE, BLANKS, MULTI_PART, MATCHING, TRANSFORM, and OPEN_RESPONSE, and requires task completion to use `taskSatisfied` when multiple assessment axes are required.
+- This is design-only. No response adapter, UI integration, event-schema migration, or Learning Core API change has been made.
