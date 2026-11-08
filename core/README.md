@@ -78,3 +78,9 @@ Run all suites with: `node --test core/learning-core.test.mjs core/content-runti
 - Diagnostic classifier v0.3 supports `rule.axis`. A rule is considered only when its own axis is incorrect; an instruction diagnostic can therefore be emitted while the grammar axis remains correct.
 - Set B B6 tests now cover all three transformations: full forms are grammatically correct but fail the requested-short-form instruction; contracted forms satisfy both axes; the authored non-standard form `I amn't` is diagnosed on the grammar axis.
 - This remains evaluator-level behavior only. Actual UI payloads, complete content descriptors, hypothesis/phase mapping, feedback/recovery references, and learner-facing progress behavior are not verified or enabled.
+
+
+## TO BE A1 UI response shape audit (v0.1 draft)
+
+- `TO_BE_A1_UI_RESPONSE_SHAPE_AUDIT_v0.1-draft.md` records that the current `core-demo.html` is a Present Simple demonstration. It submits choice payloads as `{ selectedIndex, selectedText }` and text payloads as `{ text }`, computes correctness in the caller, and does not invoke the new Answer Evaluator.
+- Consequently, B1–B8 part IDs and response paths remain unverified until the actual TO BE A1 learner interface is available. No UI wiring was changed.
