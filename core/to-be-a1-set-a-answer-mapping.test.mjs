@@ -146,6 +146,75 @@ test("A7 wrong profile choice is not automatically collapsed into a grammar diag
   assert.equal(evaluation.outcome, "INCORRECT");
 });
 
+
+test("A1 source-listed wrong forms produce only the matching form diagnostic", () => {
+  const diagnostics = [{
+    diagnosticId: "A1-BLANK1-FORM-AM",
+    errorTag: "FORM_AM", responsePath: "blank_1",
+    expectedRuleRef: "SET_A_EXERCISES_AND_ANSWER_FEEDBACK.md#A1/Error patterns",
+    scope: "TARGET_HYPOTHESIS",
+    when: { operator: "oneOf", values: ["is", "are"], normalization: { caseInsensitive: true, ignorePunctuation: true } }
+  }];
+  const t = task("A1", "BLANKS", [
+    makePart("blank_1", "am", {
+      normalization: { caseInsensitive: true, ignorePunctuation: true }, diagnostics
+    })
+  ]);
+  const response = { blank_1: "ARE!" };
+  const evaluation = evaluateAnswer({ task: t, response });
+  const classified = classifyDiagnostics({
+    task: t, rawResponse: response, evaluation, answerEventId: "answer-A1-1",
+    diagnosticTaxonomyVersion: "TO_BE_A1_v1.0.2-draft", allowedErrorTags: ["FORM_AM"]
+  });
+  assert.equal(evaluation.outcome, "INCORRECT");
+  assert.equal(classified.status, "CLASSIFIED");
+  assert.equal(classified.records[0].errorTag, "FORM_AM");
+});
+
+test("A3 source-listed wrong form is diagnosed without scoring unrelated sentence spelling", () => {
+  const diagnostics = [{
+    diagnosticId: "A3-BLANK6-FORM-ARE",
+    errorTag: "FORM_ARE", responsePath: "blank_6",
+    expectedRuleRef: "SET_A_EXERCISES_AND_ANSWER_FEEDBACK.md#A3/Error patterns",
+    scope: "TARGET_HYPOTHESIS",
+    when: { operator: "equals", value: "is" }
+  }];
+  const t = task("A3", "BLANKS", [makePart("blank_6", "are", { diagnostics })]);
+  const response = { blank_6: "is", unrelatedSpelling: "Frnace" };
+  const evaluation = evaluateAnswer({ task: t, response });
+  const classified = classifyDiagnostics({
+    task: t, rawResponse: response, evaluation, answerEventId: "answer-A3-1",
+    diagnosticTaxonomyVersion: "TO_BE_A1_v1.0.2-draft", allowedErrorTags: ["FORM_ARE"]
+  });
+  assert.equal(evaluation.outcome, "INCORRECT");
+  assert.equal(classified.records.length, 1);
+  assert.equal(classified.records[0].errorTag, "FORM_ARE");
+});
+
+test("A4 exact source correction example is diagnosed despite harmless case and punctuation differences", () => {
+  const diagnostics = [{
+    diagnosticId: "A4-SENTENCE1-FORM-AM",
+    errorTag: "FORM_AM", responsePath: "sentence_1",
+    expectedRuleRef: "SET_A_EXERCISES_AND_ANSWER_FEEDBACK.md#A4/Error patterns",
+    scope: "TARGET_HYPOTHESIS",
+    when: { operator: "equals", value: "I is Alex.", normalization: { caseInsensitive: true, ignorePunctuation: true } }
+  }];
+  const t = task("A4", "MULTI_PART", [
+    makePart("sentence_1", "I am Alex.", {
+      normalization: { caseInsensitive: true, ignorePunctuation: true }, diagnostics
+    })
+  ]);
+  const response = { sentence_1: "i IS alex!" };
+  const evaluation = evaluateAnswer({ task: t, response });
+  const classified = classifyDiagnostics({
+    task: t, rawResponse: response, evaluation, answerEventId: "answer-A4-1",
+    diagnosticTaxonomyVersion: "TO_BE_A1_v1.0.2-draft", allowedErrorTags: ["FORM_AM"]
+  });
+  assert.equal(evaluation.outcome, "INCORRECT");
+  assert.equal(classified.records.length, 1);
+  assert.equal(classified.records[0].errorTag, "FORM_AM");
+});
+
 test("A8 remains review-required without an authored deterministic rubric", () => {
   const t = task("A8", "OPEN_RESPONSE", []);
   const evaluation = evaluateAnswer({ task: t, response: { response: "My name is Alex. I am from Spain. I am happy. I am a student." } });
