@@ -107,11 +107,12 @@ Target branch: `feat/persistence-adapter-test-double`
 - Accepted alternatives for the grammar axis: the standard full and contracted forms that preserve the target negative construction. Accepted alternatives for the instruction axis: only the standard short forms requested by the task. `I amn't` is not accepted as standard.
 - Normalization: none authorized.
 - Source-backed diagnostic conditions:
-  - The corresponding full-form answers (`He is not a teacher.`, `They are not at home.`, `I am not from Italy.`) → `INSTRUCTION_FOLLOWING`, not a grammar error. These conditions apply only if the UI returns the full sentence as the part response.
-  - Exact non-standard form `I amn't from Italy.` → `NEGATIVE_CONTRACTION`.
+  - The corresponding full-form answers (`He is not a teacher.`, `They are not at home.`, `I am not from Italy.`) → `INSTRUCTION_FOLLOWING` on the instruction axis only; grammar remains correct. These conditions apply only if the UI returns the full sentence as the part response.
+  - Exact non-standard form `I amn't from Italy.` → `NEGATIVE_CONTRACTION` on the grammar axis.
 - Other incorrect contraction spellings are not diagnosed unless an exact authored criterion is added.
 - Status: `MAPPING_DRAFT`.
-- Implemented at evaluator level: separate `grammar` and `instruction` axes can now be assessed for the same response.\n- Unresolved: confirm response granularity (full sentence vs contracted token); author the complete three-part axis descriptors; resolve hypothesis/phase and feedback/recovery refs.
+- Implemented at evaluator level: separate `grammar` and `instruction` axes can now be assessed for the same response.
+- Unresolved: confirm response granularity (full sentence vs contracted token); author the complete three-part axis descriptors; resolve hypothesis/phase and feedback/recovery refs.
 
 ### B7 — Describe Maria and John
 
@@ -157,19 +158,25 @@ Target branch: `feat/persistence-adapter-test-double`
 | B3 | Five full be-form blanks | Specific form substitutions | MAPPING_DRAFT |
 | B4 | Three corrections; item 3 has two accepted forms | Exact examples only | MAPPING_DRAFT |
 | B5 | False / True / False | Context-understanding wrong options | MAPPING_DRAFT |
-| B6 | Three standard contractions | Instruction-following vs contraction error; two-axis support pending | MAPPING_DRAFT |
+| B6 | Three standard contractions | Independent grammar and instruction axes; task completion requires both | MAPPING_DRAFT |
 | B7 | Open production | Review only | REVIEW_REQUIRED |
 | B8 | Open production, at least three sentences | Review only | REVIEW_REQUIRED |
 
 ## 6. Gates before Set B validation
 
 1. Confirm UI response payloads and stable part/option IDs.
-2. Complete B6 axis descriptors for all three transformations; keep grammar and instruction compliance independent.
+2. Complete source-backed B6 descriptors using the independent grammar/instruction axes and verify actual UI response paths.
 3. Resolve approved hypothesis IDs and phase compatibility.
 4. Link each deterministic part to exact authored feedback/recovery criteria.
 5. Add source-derived evaluator/classifier tests for B1–B6; keep B7/B8 review-required.
 6. Run all Core Lab suites against the exact mapping commit.
 
-## 7. Evaluator implementation note\n\n- Evaluator v0.2 supports per-part `axes`, each with its own accepted alternatives and optional normalization. `primaryAxis` controls the legacy part/task outcome; all axes are also exposed independently in `evaluation.dimensions`.\n- Diagnostic rules may declare `axis`. A rule is considered only when that specific axis is `INCORRECT`; a correct primary grammar axis does not suppress an instruction-axis diagnostic. Rules without an explicit axis retain legacy behavior through the part primary axis.\n- Existing single-axis descriptors remain backward compatible through the implicit `answer` axis.\n\n## 8. Change control
+## 7. Evaluator implementation note
+
+- Evaluator v0.2 supports per-part `axes`, each with its own accepted alternatives and optional normalization. `primaryAxis` controls the legacy part/task outcome; all axes are also exposed independently in `evaluation.dimensions`.
+- Diagnostic rules may declare `axis`. A rule is considered only when that specific axis is `INCORRECT`; a correct primary grammar axis does not suppress an instruction-axis diagnostic. Rules without an explicit axis retain legacy behavior through the part primary axis.
+- Existing single-axis descriptors remain backward compatible through the implicit `answer` axis.
+
+## 8. Change control
 
 This is a Core Lab mapping artifact only. It does not modify the Content Library ZIP or its Markdown sources, Content Library decisions, production, or `main`.
