@@ -135,29 +135,58 @@ test("B6 standard short contractions are the accepted transformation outputs", (
   assert.equal(evaluation.outcome, "CORRECT");
 });
 
-test("B6 full form remains grammatically correct while failing the short-form instruction", () => {
-  const t = task("B6", "MULTI_PART", [{
-    partId: "transformation_1", responsePath: "transformation_1", primaryAxis: "grammar",
+test("B6 keeps grammar and instruction outcomes independent across all three transformations", () => {
+  const makeB6Part = (partId, full, short, extraDiagnostics = []) => ({
+    partId, responsePath: partId, primaryAxis: "grammar",
     axes: {
-      grammar: { accepted: [{ alternativeId: "full", value: "He is not a teacher." }, { alternativeId: "short", value: "He isn't a teacher." }] },
-      instruction: { accepted: [{ alternativeId: "short-only", value: "He isn't a teacher." }] }
+      grammar: { accepted: [{ alternativeId: "full", value: full }, { alternativeId: "short", value: short }] },
+      instruction: { accepted: [{ alternativeId: "short-only", value: short }] }
     },
     diagnostics: [
-      { ...rule("B6-INSTRUCTION-FOLLOWING", "INSTRUCTION_FOLLOWING", "transformation_1", { operator: "equals", value: "He is not a teacher." }, "B6"), axis: "instruction" }
+      { ...rule("B6-" + partId + "-INSTRUCTION", "INSTRUCTION_FOLLOWING", partId, { operator: "equals", value: full }, "B6"), axis: "instruction" },
+      ...extraDiagnostics
     ]
-  }]);
-  const response = { transformation_1: "He is not a teacher." };
-  const evaluation = evaluateAnswer({ task: t, response });
-  const d = classify(t, response, evaluation, ["INSTRUCTION_FOLLOWING"]);
-  assert.equal(evaluation.outcome, "CORRECT");
-  assert.equal(evaluation.parts[0].axes.grammar.outcome, "CORRECT");
-  assert.equal(evaluation.parts[0].axes.instruction.outcome, "INCORRECT");
-  assert.equal(evaluation.dimensions.grammar.outcome, "CORRECT");
-  assert.equal(evaluation.dimensions.instruction.outcome, "INCORRECT");
-  assert.equal(d.records.length, 1);
-  assert.equal(d.records[0].axis, "instruction");
-  assert.equal(d.records[0].errorTag, "INSTRUCTION_FOLLOWING");
-  assert.equal(d.records[0].scope, "INSTRUCTION");
+  });
+  const t = task("B6", "MULTI_PART", [
+    makeB6Part("transformation_1", "He is not a teacher.", "He isn't a teacher."),
+    makeB6Part("transformation_2", "They are not at home.", "They aren't at home."),
+    makeB6Part("transformation_3", "I am not from Italy.", "I'm not from Italy.", [
+      { ...rule("B6-NEGATIVE-CONTRACTION", "NEGATIVE_CONTRACTION", "transformation_3", { operator: "equals", value: "I amn't from Italy." }, "B6"), axis: "grammar" }
+    ])
+  ]);
+
+  const fullResponse = {
+    transformation_1: "He is not a teacher.",
+    transformation_2: "They are not at home.",
+    transformation_3: "I am not from Italy."
+  };
+  const fullEvaluation = evaluateAnswer({ task: t, response: fullResponse });
+  const fullDiagnostics = classify(t, fullResponse, fullEvaluation, ["INSTRUCTION_FOLLOWING", "NEGATIVE_CONTRACTION"]);
+  assert.equal(fullEvaluation.outcome, "CORRECT");
+  assert.equal(fullEvaluation.dimensions.grammar.outcome, "CORRECT");
+  assert.equal(fullEvaluation.dimensions.instruction.outcome, "INCORRECT");
+  assert.equal(fullDiagnostics.records.length, 3);
+  assert.ok(fullDiagnostics.records.every(record => record.axis === "instruction" && record.errorTag === "INSTRUCTION_FOLLOWING"));
+
+  const shortResponse = {
+    transformation_1: "He isn't a teacher.",
+    transformation_2: "They aren't at home.",
+    transformation_3: "I'm not from Italy."
+  };
+  const shortEvaluation = evaluateAnswer({ task: t, response: shortResponse });
+  const shortDiagnostics = classify(t, shortResponse, shortEvaluation, ["INSTRUCTION_FOLLOWING", "NEGATIVE_CONTRACTION"]);
+  assert.equal(shortEvaluation.dimensions.grammar.outcome, "CORRECT");
+  assert.equal(shortEvaluation.dimensions.instruction.outcome, "CORRECT");
+  assert.equal(shortDiagnostics.status, "NO_DIAGNOSTIC");
+
+  const malformedResponse = { ...shortResponse, transformation_3: "I amn't from Italy." };
+  const malformedEvaluation = evaluateAnswer({ task: t, response: malformedResponse });
+  const malformedDiagnostics = classify(t, malformedResponse, malformedEvaluation, ["INSTRUCTION_FOLLOWING", "NEGATIVE_CONTRACTION"]);
+  assert.equal(malformedEvaluation.parts[2].axes.grammar.outcome, "INCORRECT");
+  assert.equal(malformedEvaluation.parts[2].axes.instruction.outcome, "INCORRECT");
+  assert.equal(malformedDiagnostics.records.length, 1);
+  assert.equal(malformedDiagnostics.records[0].axis, "grammar");
+  assert.equal(malformedDiagnostics.records[0].errorTag, "NEGATIVE_CONTRACTION");
 });
 test("B7 and B8 stay review-required without deterministic open-response rubrics", () => {
   const b7 = task("B7", "OPEN_RESPONSE", []);
