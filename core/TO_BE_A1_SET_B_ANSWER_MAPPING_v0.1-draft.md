@@ -111,7 +111,7 @@ Target branch: `feat/persistence-adapter-test-double`
   - Exact non-standard form `I amn't from Italy.` → `NEGATIVE_CONTRACTION` on the grammar axis.
 - Other incorrect contraction spellings are not diagnosed unless an exact authored criterion is added.
 - Status: `MAPPING_DRAFT`.
-- Implemented at evaluator level: separate `grammar` and `instruction` axes can now be assessed for the same response.
+- Implemented at evaluator level: separate `grammar` and `instruction` axes can now be assessed for the same response; B6 declares both as `requiredAxes`, so a correct grammar result alone does not satisfy task completion.
 - Unresolved: confirm response granularity (full sentence vs contracted token); author the complete three-part axis descriptors; resolve hypothesis/phase and feedback/recovery refs.
 
 ### B7 — Describe Maria and John
@@ -173,7 +173,7 @@ Target branch: `feat/persistence-adapter-test-double`
 
 ## 7. Evaluator implementation note
 
-- Evaluator v0.2 supports per-part `axes`, each with its own accepted alternatives and optional normalization. `primaryAxis` controls the legacy part/task outcome; all axes are also exposed independently in `evaluation.dimensions`.
+- Evaluator v0.2 supports per-part `axes`, each with its own accepted alternatives and optional normalization. `primaryAxis` controls the compatibility outcome; all axes are also exposed independently in `evaluation.dimensions`. Task-level `requiredAxes` control `taskSatisfied`, which must be true before the task is considered complete.
 - Diagnostic rules may declare `axis`. A rule is considered only when that specific axis is `INCORRECT`; a correct primary grammar axis does not suppress an instruction-axis diagnostic. Rules without an explicit axis retain legacy behavior through the part primary axis.
 - Existing single-axis descriptors remain backward compatible through the implicit `answer` axis.
 
