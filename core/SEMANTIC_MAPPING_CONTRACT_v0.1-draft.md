@@ -44,6 +44,7 @@ For deterministic modes, each part requires:
 - responsePath when the response shape is not the partId;
 - accepted: a non-empty list of { alternativeId, value } entries;
 - normalization flags only where the source explicitly permits them;
+- supported normalization flags are `trim`, `collapseInternalWhitespace`, `caseInsensitive`, and `ignorePunctuation`; use `ignorePunctuation` only where the source explicitly allows punctuation differences;
 - diagnostics: an explicit array, including an empty array when no deterministic diagnostic rule is authored.
 
 Accepted values must preserve the exact answer semantics and ordering constraints from the source. An unordered response is allowed only where the source explicitly says display/order is irrelevant.
