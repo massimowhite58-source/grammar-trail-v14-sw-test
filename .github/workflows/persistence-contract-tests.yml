@@ -32,3 +32,5 @@ jobs:
           core/content-library-adapter.test.mjs
           core/content-package-adapter.test.mjs
           core/content-profiles/to-be-a1-v1.0.2-draft.test.mjs
+          core/to-be-a1-set-a-answer-mapping.test.mjs
+          core/to-be-a1-set-b-answer-mapping.test.mjs
