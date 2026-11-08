@@ -1,13 +1,16 @@
 /**
- * Grammar Trail Answer Evaluator v0.1
- * Pure deterministic matcher for normalized, authored evaluation descriptors.
- * It never edits the raw learner response and never guesses open-ended meaning.
+ * Grammar Trail Answer Evaluator v0.2
+ * Deterministic evaluator with independently reported assessment dimensions.
+ * Raw learner responses are read-only and never rewritten.
  */
-export const ANSWER_EVALUATOR_VERSION = "0.1.0";
+export const ANSWER_EVALUATOR_VERSION = "0.2.0";
 const MODES = new Set(["CHOICE", "BLANKS", "MATCHING", "TRANSFORM", "MULTI_PART", "OPEN_RESPONSE"]);
 
-function result(status, outcome = null, taskCorrect = null, parts = [], reason = null) {
-  return Object.freeze({ status, outcome, taskCorrect, parts: Object.freeze(parts), reason, evaluatorVersion: ANSWER_EVALUATOR_VERSION });
+function result(status, outcome = null, taskCorrect = null, parts = [], reason = null, dimensions = {}) {
+  return Object.freeze({
+    status, outcome, taskCorrect, parts: Object.freeze(parts), reason,
+    dimensions: Object.freeze(dimensions), evaluatorVersion: ANSWER_EVALUATOR_VERSION
+  });
 }
 function isObject(value) { return value !== null && typeof value === "object" && !Array.isArray(value); }
 function readPath(value, path) {
@@ -37,6 +40,10 @@ function stableValue(value, rules = {}) {
 function equal(actual, expected, rules) {
   return JSON.stringify(stableValue(actual, rules)) === JSON.stringify(stableValue(expected, rules));
 }
+function validateAccepted(accepted) {
+  return Array.isArray(accepted) && accepted.length > 0 &&
+    !accepted.some(item => !isObject(item) || !Object.hasOwn(item, "value"));
+}
 function validateDescriptor(descriptor) {
   if (!descriptor || !MODES.has(descriptor.mode)) return "EVALUATION_MODE_UNSUPPORTED";
   if (descriptor.mode === "OPEN_RESPONSE") return null;
@@ -45,15 +52,33 @@ function validateDescriptor(descriptor) {
   for (const part of descriptor.parts) {
     if (!part || typeof part.partId !== "string" || !part.partId.trim() || ids.has(part.partId)) return "PART_ID_MISSING_OR_DUPLICATE";
     ids.add(part.partId);
-    if (!Array.isArray(part.accepted) || part.accepted.length === 0 || part.accepted.some(item => !isObject(item) || !Object.hasOwn(item, "value"))) return "ACCEPTED_ANSWERS_REQUIRED";
     if (part.responsePath !== undefined && typeof part.responsePath !== "string") return "RESPONSE_PATH_INVALID";
+    if (part.axes !== undefined) {
+      if (!isObject(part.axes) || Object.keys(part.axes).length === 0) return "ASSESSMENT_AXES_INVALID";
+      for (const [axis, axisDescriptor] of Object.entries(part.axes)) {
+        if (!axis.trim() || !isObject(axisDescriptor) || !validateAccepted(axisDescriptor.accepted)) return "ASSESSMENT_AXIS_DESCRIPTOR_INVALID";
+      }
+      if (part.primaryAxis !== undefined && !Object.hasOwn(part.axes, part.primaryAxis)) return "PRIMARY_AXIS_UNKNOWN";
+    } else if (!validateAccepted(part.accepted)) {
+      return "ACCEPTED_ANSWERS_REQUIRED";
+    }
   }
   return null;
 }
+function assessAxis(actual, axisDescriptor) {
+  const matchedIndex = axisDescriptor.accepted.findIndex(candidate =>
+    equal(actual, candidate.value, axisDescriptor.normalization ?? {})
+  );
+  return Object.freeze({
+    outcome: actual === undefined ? "REVIEW_REQUIRED" : matchedIndex >= 0 ? "CORRECT" : "INCORRECT",
+    matchedAlternativeId: matchedIndex >= 0 ? (axisDescriptor.accepted[matchedIndex].alternativeId ?? null) : null
+  });
+}
 
 /**
- * task.evaluation is a normalized descriptor produced by a versioned content adapter.
- * Response is treated as read-only input and is not normalized in-place.
+ * Legacy descriptors without axes retain the original single-answer behavior.
+ * When axes are authored, each is assessed independently. The part outcome and
+ * task outcome follow primaryAxis (default: "answer"); dimensions expose all axes.
  */
 export function evaluateAnswer({ task, response, evaluatorVersion = ANSWER_EVALUATOR_VERSION }) {
   if (!task || typeof task.taskId !== "string" || typeof task.contentVersion !== "string") {
@@ -66,23 +91,47 @@ export function evaluateAnswer({ task, response, evaluatorVersion = ANSWER_EVALU
 
   const parts = descriptor.parts.map(part => {
     const actual = readPath(response, part.responsePath ?? part.partId);
-    const matchedIndex = part.accepted.findIndex(candidate => equal(actual, candidate.value, part.normalization ?? {}));
+    const axes = part.axes ?? { answer: { accepted: part.accepted, normalization: part.normalization } };
+    const axisResults = Object.fromEntries(Object.entries(axes).map(([axis, axisDescriptor]) =>
+      [axis, assessAxis(actual, axisDescriptor)]
+    ));
+    const primaryAxis = part.primaryAxis ?? "answer";
+    const primary = axisResults[primaryAxis];
     return Object.freeze({
       partId: part.partId,
-      outcome: actual === undefined ? "REVIEW_REQUIRED" : matchedIndex >= 0 ? "CORRECT" : "INCORRECT",
-      matchedAlternativeId: matchedIndex >= 0 ? (part.accepted[matchedIndex].alternativeId ?? null) : null,
-      responsePath: part.responsePath ?? part.partId
+      outcome: primary.outcome,
+      matchedAlternativeId: primary.matchedAlternativeId,
+      responsePath: part.responsePath ?? part.partId,
+      primaryAxis,
+      axes: Object.freeze(axisResults)
     });
   });
 
-  if (parts.some(part => part.outcome === "REVIEW_REQUIRED")) {
+  if (parts.some(part => Object.values(part.axes).some(axis => axis.outcome === "REVIEW_REQUIRED"))) {
     return Object.freeze({ ...result("REVIEW_REQUIRED", null, null, parts, "RESPONSE_PART_MISSING"), evaluatorVersion, contentVersion: task.contentVersion, taskId: task.taskId });
   }
+
+  const dimensions = {};
+  for (const part of parts) {
+    for (const [axis, assessment] of Object.entries(part.axes)) {
+      const aggregate = dimensions[axis] ?? { correctCount: 0, incorrectCount: 0, partCount: 0 };
+      aggregate.partCount += 1;
+      if (assessment.outcome === "CORRECT") aggregate.correctCount += 1;
+      else aggregate.incorrectCount += 1;
+      dimensions[axis] = aggregate;
+    }
+  }
+  for (const [axis, aggregate] of Object.entries(dimensions)) {
+    aggregate.outcome = aggregate.incorrectCount === 0 ? "CORRECT" :
+      aggregate.correctCount === 0 ? "INCORRECT" : "PARTIALLY_CORRECT";
+    Object.freeze(aggregate);
+  }
+
   const correctCount = parts.filter(part => part.outcome === "CORRECT").length;
   const taskCorrect = correctCount === parts.length;
   const outcome = taskCorrect ? "CORRECT" : correctCount > 0 ? "PARTIALLY_CORRECT" : "INCORRECT";
   return Object.freeze({
-    ...result("EVALUATED", outcome, taskCorrect, parts),
+    ...result("EVALUATED", outcome, taskCorrect, parts, null, dimensions),
     evaluatorVersion,
     contentVersion: task.contentVersion,
     taskId: task.taskId,
