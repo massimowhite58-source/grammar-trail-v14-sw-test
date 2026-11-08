@@ -6,9 +6,9 @@
 export const ANSWER_EVALUATOR_VERSION = "0.2.0";
 const MODES = new Set(["CHOICE", "BLANKS", "MATCHING", "TRANSFORM", "MULTI_PART", "OPEN_RESPONSE"]);
 
-function result(status, outcome = null, taskCorrect = null, parts = [], reason = null, dimensions = {}) {
+function result(status, outcome = null, taskCorrect = null, parts = [], reason = null, dimensions = {}, taskSatisfied = null) {
   return Object.freeze({
-    status, outcome, taskCorrect, parts: Object.freeze(parts), reason,
+    status, outcome, taskCorrect, taskSatisfied, parts: Object.freeze(parts), reason,
     dimensions: Object.freeze(dimensions), evaluatorVersion: ANSWER_EVALUATOR_VERSION
   });
 }
@@ -48,6 +48,12 @@ function validateDescriptor(descriptor) {
   if (!descriptor || !MODES.has(descriptor.mode)) return "EVALUATION_MODE_UNSUPPORTED";
   if (descriptor.mode === "OPEN_RESPONSE") return null;
   if (!Array.isArray(descriptor.parts) || descriptor.parts.length === 0) return "EVALUATION_PARTS_REQUIRED";
+  if (descriptor.requiredAxes !== undefined &&
+      (!Array.isArray(descriptor.requiredAxes) || descriptor.requiredAxes.length === 0 ||
+       descriptor.requiredAxes.some(axis => typeof axis !== "string" || !axis.trim()) ||
+       new Set(descriptor.requiredAxes).size !== descriptor.requiredAxes.length)) {
+    return "REQUIRED_AXES_INVALID";
+  }
   const ids = new Set();
   for (const part of descriptor.parts) {
     if (!part || typeof part.partId !== "string" || !part.partId.trim() || ids.has(part.partId)) return "PART_ID_MISSING_OR_DUPLICATE";
@@ -59,6 +65,7 @@ function validateDescriptor(descriptor) {
         if (!axis.trim() || !isObject(axisDescriptor) || !validateAccepted(axisDescriptor.accepted)) return "ASSESSMENT_AXIS_DESCRIPTOR_INVALID";
       }
       if (part.primaryAxis !== undefined && !Object.hasOwn(part.axes, part.primaryAxis)) return "PRIMARY_AXIS_UNKNOWN";
+      if (descriptor.requiredAxes?.some(axis => !Object.hasOwn(part.axes, axis))) return "REQUIRED_AXIS_MISSING_FROM_PART";
     } else if (!validateAccepted(part.accepted)) {
       return "ACCEPTED_ANSWERS_REQUIRED";
     }
@@ -130,8 +137,11 @@ export function evaluateAnswer({ task, response, evaluatorVersion = ANSWER_EVALU
   const correctCount = parts.filter(part => part.outcome === "CORRECT").length;
   const taskCorrect = correctCount === parts.length;
   const outcome = taskCorrect ? "CORRECT" : correctCount > 0 ? "PARTIALLY_CORRECT" : "INCORRECT";
+  const requiredAxes = descriptor.requiredAxes ?? [];
+  const taskSatisfied = requiredAxes.length === 0 ? taskCorrect :
+    requiredAxes.every(axis => dimensions[axis]?.outcome === "CORRECT");
   return Object.freeze({
-    ...result("EVALUATED", outcome, taskCorrect, parts, null, dimensions),
+    ...result("EVALUATED", outcome, taskCorrect, parts, null, dimensions, taskSatisfied),
     evaluatorVersion,
     contentVersion: task.contentVersion,
     taskId: task.taskId,
