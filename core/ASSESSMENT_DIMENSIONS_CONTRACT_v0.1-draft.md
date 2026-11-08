@@ -59,9 +59,11 @@ The example illustrates the contract only; it is not a complete B6 mapping.
 ## 4. Evaluation behavior
 
 - Each axis is assessed independently against its own authored accepted values.
-- `primaryAxis` determines the legacy part outcome and task-level `outcome`. If omitted, the default is `answer`.\n- Optional task-level `requiredAxes` lists the dimensions that must all be correct for `taskSatisfied: true`. If omitted, `taskSatisfied` follows legacy `taskCorrect`. This keeps the primary grammar result visible without allowing a failed instruction requirement to count as a completed task.
+- `primaryAxis` determines the legacy part outcome and task-level `outcome`. If omitted, the default is `answer`.
+- Optional task-level `requiredAxes` lists the dimensions that must all be correct for `taskSatisfied: true`. If omitted, `taskSatisfied` follows legacy `taskCorrect`. This keeps the primary grammar result visible without allowing a failed instruction requirement to count as a completed task.
 - Per-part axis results are returned in `part.axes`.
-- Aggregate results are returned in `evaluation.dimensions`.\n- `taskCorrect` remains the primary-axis compatibility result. `taskSatisfied` is the completion gate across all declared `requiredAxes`.
+- Aggregate results are returned in `evaluation.dimensions`.
+- `taskCorrect` remains the primary-axis compatibility result. `taskSatisfied` is the completion gate across all declared `requiredAxes`.
 - Existing descriptors without `axes` remain compatible through an implicit `answer` axis.
 - A missing response value makes the evaluation `REVIEW_REQUIRED`; it must not be treated as incorrect.
 - Raw learner responses are immutable and are never normalized in place.
