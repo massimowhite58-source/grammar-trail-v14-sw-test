@@ -143,6 +143,8 @@ Target branch: `feat/persistence-adapter-test-double`
 
 ## 4. Runtime compatibility findings
 
+- `TO_BE_A1_UI_RESPONSE_SHAPE_AUDIT_v0.1-draft.md` inspected the current `core-demo.html`: it is a Present Simple sample, passes `{ selectedIndex, selectedText }` for choice or `{ text }` for text, and computes `correct` before calling Learning Core. It does not call the new Answer Evaluator. Therefore no B1–B8 part response path is confirmed.
+
 - Evaluator reads `response[part.responsePath ?? part.partId]`; part IDs and response paths must match the actual UI payload.
 - MULTI_PART supports independent part outcomes within one exercise. B1 must remain one exercise with two parts.
 - TRANSFORM and MULTI_PART can compare multiple accepted values for a part. B2 can therefore carry full and contracted accepted forms.
