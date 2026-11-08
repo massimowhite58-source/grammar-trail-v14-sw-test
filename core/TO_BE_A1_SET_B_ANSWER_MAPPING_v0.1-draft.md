@@ -104,14 +104,14 @@ Target branch: `feat/persistence-adapter-test-double`
   1. `He isn't a teacher.`
   2. `They aren't at home.`
   3. `I'm not from Italy.`
-- Accepted alternatives: only the standard short forms requested by the task. Full forms are grammatical but do not satisfy this transformation instruction. `I amn't` is not accepted as standard.
+- Accepted alternatives for the grammar axis: the standard full and contracted forms that preserve the target negative construction. Accepted alternatives for the instruction axis: only the standard short forms requested by the task. `I amn't` is not accepted as standard.
 - Normalization: none authorized.
 - Source-backed diagnostic conditions:
   - The corresponding full-form answers (`He is not a teacher.`, `They are not at home.`, `I am not from Italy.`) → `INSTRUCTION_FOLLOWING`, not a grammar error. These conditions apply only if the UI returns the full sentence as the part response.
   - Exact non-standard form `I amn't from Italy.` → `NEGATIVE_CONTRACTION`.
 - Other incorrect contraction spellings are not diagnosed unless an exact authored criterion is added.
 - Status: `MAPPING_DRAFT`.
-- Unresolved: confirm response granularity (full sentence vs contracted token); confirm whether the evaluator can preserve a correct grammar axis while marking instruction compliance separately; resolve hypothesis/phase and feedback/recovery refs.
+- Implemented at evaluator level: separate `grammar` and `instruction` axes can now be assessed for the same response.\n- Unresolved: confirm response granularity (full sentence vs contracted token); author the complete three-part axis descriptors; resolve hypothesis/phase and feedback/recovery refs.
 
 ### B7 — Describe Maria and John
 
@@ -145,7 +145,7 @@ Target branch: `feat/persistence-adapter-test-double`
 - Evaluator reads `response[part.responsePath ?? part.partId]`; part IDs and response paths must match the actual UI payload.
 - MULTI_PART supports independent part outcomes within one exercise. B1 must remain one exercise with two parts.
 - TRANSFORM and MULTI_PART can compare multiple accepted values for a part. B2 can therefore carry full and contracted accepted forms.
-- B6 requires separate grammar and instruction-compliance dimensions. Current evaluator returns only answer correctness; it cannot independently report “grammatically correct but instruction not followed” as two axes without an additional scoring descriptor/axis.
+- B6 uses independent `grammar` and `instruction` axes. A full form can be grammatically correct while failing the requested-short-form instruction. Diagnostics are evaluated against their declared axis.
 - OPEN_RESPONSE remains REVIEW_REQUIRED without an explicit supported rubric.
 
 ## 5. Set B readiness
@@ -164,12 +164,12 @@ Target branch: `feat/persistence-adapter-test-double`
 ## 6. Gates before Set B validation
 
 1. Confirm UI response payloads and stable part/option IDs.
-2. Resolve B6 dual-axis scoring so instruction compliance does not overwrite grammar correctness.
+2. Complete B6 axis descriptors for all three transformations; keep grammar and instruction compliance independent.
 3. Resolve approved hypothesis IDs and phase compatibility.
 4. Link each deterministic part to exact authored feedback/recovery criteria.
 5. Add source-derived evaluator/classifier tests for B1–B6; keep B7/B8 review-required.
 6. Run all Core Lab suites against the exact mapping commit.
 
-## 7. Change control
+## 7. Evaluator implementation note\n\n- Evaluator v0.2 supports per-part `axes`, each with its own accepted alternatives and optional normalization. `primaryAxis` controls the legacy part/task outcome; all axes are also exposed independently in `evaluation.dimensions`.\n- Diagnostic rules may declare `axis`. A rule is considered only when that specific axis is `INCORRECT`; a correct primary grammar axis does not suppress an instruction-axis diagnostic. Rules without an explicit axis retain legacy behavior through the part primary axis.\n- Existing single-axis descriptors remain backward compatible through the implicit `answer` axis.\n\n## 8. Change control
 
 This is a Core Lab mapping artifact only. It does not modify the Content Library ZIP or its Markdown sources, Content Library decisions, production, or `main`.
