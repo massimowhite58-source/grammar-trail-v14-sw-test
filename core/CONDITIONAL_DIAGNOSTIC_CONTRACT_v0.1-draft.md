@@ -37,7 +37,7 @@ Supported v0.1 condition operators:
 - oneOf: exact match against a non-empty authored list.
 - notOneOf: exact match exclusion against a non-empty authored list, only when the source explicitly defines that diagnostic boundary.
 
-No regular expressions, fuzzy matching, stemming, semantic similarity, generated conditions, or implicit catch-all rules in v0.1. Normalization is allowed only when explicitly authored on the condition and must use the same narrow flags as evaluation: trim, collapseInternalWhitespace, caseInsensitive.
+No regular expressions, fuzzy matching, stemming, semantic similarity, generated conditions, or implicit catch-all rules in v0.1. Normalization is allowed only when explicitly authored on the condition and must use the same narrow flags as evaluation: trim, collapseInternalWhitespace, caseInsensitive, and source-authorized ignorePunctuation.
 
 A rule without a complete condition is not executable and returns REVIEW_REQUIRED; it must not fall back to “part outcome is INCORRECT”.
 
