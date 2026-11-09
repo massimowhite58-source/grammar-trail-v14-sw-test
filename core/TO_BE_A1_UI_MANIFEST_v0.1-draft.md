@@ -2,7 +2,7 @@
 
 **Status:** Structural identity proposal; not approved for learner delivery.  
 **Source package:** `TO_BE_A1_FULL_CONTENT_LIBRARY_v1.0.2-draft`  
-**Source version:** `1.0.2-draft`  
+**Source version:** `v1.0.2-draft`  
 **Target branch:** `feat/persistence-adapter-test-double`  
 **Companion inventory:** `core/TO_BE_A1_SOURCE_EXERCISE_UI_INVENTORY_v0.1-draft.md`  
 **Scope:** Stable exercise, response-unit, matching-item, and option identities plus source provenance only.
@@ -83,7 +83,7 @@ Legend:
 The table above is the human-readable inventory. A renderer-facing representation should use records with this conceptual shape:
 
 - `packageId`: stable package identifier (must be confirmed against the package metadata).
-- `contentVersion`: `1.0.2-draft`.
+- `contentVersion`: `v1.0.2-draft` (matches the package profile's canonical value).
 - `exerciseId`: exact source exercise ID.
 - `source.documentPath`: one of the four source documents in §3.
 - `source.heading`: exact source heading, including exercise ID and title.
