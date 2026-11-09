@@ -35,5 +35,7 @@ jobs:
           done
           cat /tmp/grammar-trail-http.log
           exit 1
+      - name: Run isolated TO BE A1 UI capture tests in Chromium
+        run: node core/to-be-a1-lab.browser.test.cjs
       - name: Run native IndexedDB smoke tests in Chromium
         run: node core/indexeddb-browser-smoke.test.cjs
