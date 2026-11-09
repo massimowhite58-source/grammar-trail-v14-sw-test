@@ -35,21 +35,21 @@ const assert = require("node:assert/strict");
 
     // Raw text is preserved exactly, including leading/trailing spaces and punctuation.
     await page.locator("#exerciseSelect").selectOption("A1");
-    await page.locator("#control-A1.r01").fill("  am!?  ");
+    await page.locator('[id="control-A1.r01"]').fill("  am!?  ");
     let payload = JSON.parse(await page.locator("#rawPayload").textContent());
     assert.equal(payload.exerciseId, "A1");
     assert.equal(payload.responses[0].rawValue, "  am!?  ");
     assert.equal(payload.responses[0].status, "VALUE");
 
     // An explicitly cleared field differs from a field that was never touched.
-    await page.locator("#control-A1.r01").fill("");
+    await page.locator('[id="control-A1.r01"]').fill("");
     payload = JSON.parse(await page.locator("#rawPayload").textContent());
     assert.equal(payload.responses[0].status, "EMPTY");
     assert.equal(payload.responses[1].status, "NOT_TOUCHED");
 
     // Matching retains the stable selected option ID separately from display text.
     await page.locator("#exerciseSelect").selectOption("A2");
-    await page.locator("#control-A2.r01").selectOption("A2.right.c");
+    await page.locator('[id="control-A2.r01"]').selectOption("A2.right.c");
     payload = JSON.parse(await page.locator("#rawPayload").textContent());
     assert.equal(payload.responses[0].selectedOptionId, "A2.right.c");
     assert.equal(payload.responses[0].displayText, "c) They are at an English course.");
@@ -57,13 +57,13 @@ const assert = require("node:assert/strict");
 
     // Choice responses retain option identity, not just index or label.
     await page.locator("#exerciseSelect").selectOption("A7");
-    await page.locator("#control-A7.r01-A7.opt.B").check();
+    await page.locator('[id="control-A7.r01-A7.opt.B"]').check();
     payload = JSON.parse(await page.locator("#rawPayload").textContent());
     assert.equal(payload.responses[0].selectedOptionId, "A7.opt.B");
 
     // True/False is captured as the source label, not represented as a fabricated option ID.
     await page.locator("#exerciseSelect").selectOption("A5");
-    await page.locator("#control-A5.r01").selectOption("True");
+    await page.locator('[id="control-A5.r01"]').selectOption("True");
     payload = JSON.parse(await page.locator("#rawPayload").textContent());
     assert.equal(payload.responses[0].rawValue, "True");
     assert.equal(payload.responses[0].optionIdentity, "SOURCE_LABEL_ONLY");
@@ -71,7 +71,7 @@ const assert = require("node:assert/strict");
     // Multi-part question/answer capture keeps each manifest ID independent.
     await page.locator("#exerciseSelect").selectOption("D6");
     assert.equal(await page.locator("#responseFields .field").count(), 8);
-    await page.locator("#control-D6.r01.question").fill("What is his name?");
+    await page.locator('[id="control-D6.r01.question"]').fill("What is his name?");
     payload = JSON.parse(await page.locator("#rawPayload").textContent());
     assert.equal(payload.responses[0].responseUnitId, "D6.r01.question");
     assert.equal(payload.responses[0].rawValue, "What is his name?");
@@ -79,7 +79,7 @@ const assert = require("node:assert/strict");
 
     // Open text keeps line breaks and punctuation verbatim.
     await page.locator("#exerciseSelect").selectOption("D8");
-    await page.locator("#control-D8.part1.r01").fill("Hello!\nI am Alex.  ");
+    await page.locator('[id="control-D8.part1.r01"]').fill("Hello!\nI am Alex.  ");
     payload = JSON.parse(await page.locator("#rawPayload").textContent());
     assert.equal(payload.responses[0].rawValue, "Hello!\nI am Alex.  ");
     assert.equal(payload.responses[1].status, "NOT_TOUCHED");
