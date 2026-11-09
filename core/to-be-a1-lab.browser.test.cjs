@@ -92,6 +92,19 @@ const assert = require("node:assert/strict");
     payload = JSON.parse(await page.locator("#rawPayload").textContent());
     assert.equal(payload.responses[0].status, "NOT_TOUCHED");
 
+    await page.setViewportSize({ width: 390, height: 844 });
+    const mobileWidth = await page.evaluate(() => ({
+      viewport: document.documentElement.clientWidth,
+      content: document.documentElement.scrollWidth,
+    }));
+    assert.ok(mobileWidth.content <= mobileWidth.viewport, `mobile layout must not overflow horizontally: ${JSON.stringify(mobileWidth)}`);
+
+    // A reload starts a fresh in-memory test session; no response is persisted.
+    await page.reload({ waitUntil: "load" });
+    payload = JSON.parse(await page.locator("#rawPayload").textContent());
+    assert.equal(payload.exerciseId, "A1");
+    assert.equal(payload.responses[0].status, "NOT_TOUCHED");
+
     assert.equal(await page.evaluate(() => document.querySelectorAll("script").length), 1);
     assert.equal(await page.evaluate(() => performance.getEntriesByType("resource").filter((entry) => /https?:/.test(entry.name) && !entry.name.includes("127.0.0.1")).length), 0,
       "page must not load external scripts or resources");
