@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#000080">
+<title>Grammar Trail — TO BE A1 Core Lab</title>
+<style>
+:root{color-scheme:light;--navy:#000080;--blue:#8080ff;--peach:#f2c9b3;--ink:#17172c;--muted:#55556d;--surface:#fff;--page:#f0efff;--line:#d7d6ec;--focus:#4b4bd6}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:16px/1.6 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+header{background:var(--navy);color:#fff;padding:20px max(18px,calc((100vw - 900px)/2));}
+.header-inner{max-width:900px;margin:auto}
+.kicker{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:#e5e5ff;font-weight:700}
+h1{font-size:24px;line-height:1.25;margin:5px 0 4px}
+header p{margin:0;color:#fff;font-size:14px}
+main{max-width:820px;margin:24px auto;padding:0 18px 56px}
+.notice{background:#fff;border:1px solid var(--line);border-left:5px solid var(--peach);border-radius:12px;padding:13px 16px;margin-bottom:18px;font-size:14px}
+.toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.toolbar label{font-weight:700;color:var(--navy)}
+select,button,input,textarea{font:inherit}
+.toolbar select{flex:1;min-width:190px;max-width:100%;padding:10px 12px;border:1px solid #9a99bd;border-radius:9px;background:#fff;color:var(--ink)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px;box-shadow:0 5px 20px rgba(0,0,80,.06)}
+.meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.pill{display:inline-block;border-radius:999px;padding:3px 10px;background:#eeeeff;color:var(--navy);font-size:13px;font-weight:700}
+.source{font-size:13px;color:var(--muted)}
+h2{font-size:21px;line-height:1.3;color:var(--navy);margin:0 0 14px}
+.prompt{font-size:19.2px;line-height:1.6;font-weight:650;color:var(--navy);white-space:pre-wrap;margin:0 0 22px}
+.prompt p{margin:0 0 10px}.prompt ul{margin:6px 0 12px;padding-left:24px}.prompt code{background:#f0efff;padding:1px 4px;border-radius:4px;font-size:.94em}
+.unresolved{border:1px dashed #9b83a9;background:#fbf7ff;padding:10px 12px;border-radius:9px;color:#44334d;font-size:14px;margin:0 0 16px}
+.fields{display:grid;gap:14px}
+.field{display:grid;gap:6px}
+.field label{font-weight:650;color:#242442}
+.field input,.field textarea,.field select{width:100%;min-width:0;padding:11px 12px;border:1px solid #9291b4;border-radius:9px;background:#fff;color:var(--ink);font-size:17px;line-height:1.45}
+.field textarea{min-height:88px;resize:vertical}
+.field input:focus,.field textarea:focus,.field select:focus,.toolbar select:focus,button:focus-visible{outline:3px solid rgba(75,75,214,.25);border-color:var(--focus)}
+.choice-list{display:grid;gap:9px}
+.choice{display:flex;align-items:flex-start;gap:10px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer}
+.choice input{margin-top:6px;accent-color:var(--navy);width:18px;height:18px;flex:0 0 auto}
+.choice span{line-height:1.45}
+.nav{display:flex;justify-content:space-between;gap:10px;margin-top:18px}
+button{min-height:44px;border-radius:10px;padding:9px 16px;border:1px solid var(--navy);font-weight:700;cursor:pointer}
+.primary{background:var(--navy);color:#fff}.secondary{background:#fff;color:var(--navy)}
+button:disabled{opacity:.45;cursor:not-allowed}
+.inspector{margin-top:18px;background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.inspector summary{cursor:pointer;padding:13px 16px;color:var(--navy);font-weight:750}
+.inspector-body{padding:0 16px 16px}
+.inspector p{font-size:14px;color:var(--muted);margin:0 0 9px}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#15152d;color:#f7f7ff;padding:14px;border-radius:9px;font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;max-height:440px;overflow:auto}
+.footer-note{font-size:13px;color:var(--muted);margin-top:16px}
+@media(max-width:520px){header{padding:18px}main{padding:0 14px 40px;margin-top:16px}.card{padding:17px}.prompt{font-size:18px}.nav button{flex:1}.toolbar{align-items:stretch}.toolbar select{width:100%;max-width:none}}
+</style>
+</head>
+<body>
+<header><div class="header-inner"><div class="kicker">Test-only · Isolated Core Lab</div><h1>TO BE A1 — source exercise renderer</h1><p>Content package: TO_BE_A1_FULL_CONTENT_LIBRARY · v1.0.2-draft</p></div></header>
+<main>
+<div class="notice"><strong>Test environment only.</strong> This page displays source learner prompts and captures raw UI input in memory. It does not check answers, provide feedback, diagnose errors, update learning progress, or save data between reloads.</div>
+<div class="toolbar"><label for="exerciseSelect">Exercise</label><select id="exerciseSelect" aria-label="Select source exercise"></select></div>
+<section class="card" aria-labelledby="exerciseTitle">
+<div class="meta"><span class="pill" id="exerciseId">A1</span><span class="pill">Source prompt</span><span class="source" id="sourceDoc"></span></div>
+<h2 id="exerciseTitle"></h2>
+<div class="prompt" id="exercisePrompt"></div>
+<div id="unresolvedNote"></div>
+<form id="responseForm" autocomplete="off"><div class="fields" id="responseFields"></div>
+<div class="nav"><button type="button" class="secondary" id="previousButton">← Previous</button><button type="button" class="primary" id="nextButton">Next →</button></div>
+</form>
+</section>
+<details class="inspector" open><summary>Raw response inspector</summary><div class="inspector-body"><p>Values are shown exactly as emitted by the controls. Untouched and explicitly empty controls are distinguished. No normalization or evaluation is applied.</p><pre id="rawPayload" aria-live="polite"></pre><button type="button" class="secondary" id="clearButton">Clear this exercise's inputs</button></div></details>
+<p class="footer-note">Source provenance: original exercise heading and learner prompt from the four SET_*_EXERCISES_AND_ANSWER_FEEDBACK.md files in package v1.0.2-draft. Derived UI field slots are visibly marked where the source does not define individual fields.</p>
+</main>
+<script>
+"use strict";
+const EXERCISES = [{"id":"A1","title":"Choose the correct form","source":"SET_A_EXERCISES_AND_ANSWER_FEEDBACK.md","prompt":"Choose am, is or are: 1) I __ Alex. 2) She __ from Italy. 3) They __ students. 4) We __ friends. 5) He __ a teacher.","fields":[["A1.r01","Blank 1 — I __ Alex"],["A1.r02","Blank 2 — She __ from Italy"],["A1.r03","Blank 3 — They __ students"],["A1.r04","Blank 4 — We __ friends"],["A1.r05","Blank 5 — He __ a teacher"]]},{"id":"A2","title":"Match people and descriptions","source":"SET_A_EXERCISES_AND_ANSWER_FEEDBACK.md","prompt":"Match: Emma; Daniel; Anna and Mark; You and I. Descriptions: a) We are friends. b) She is a student. c) They are at an English course. d) He is a teacher.","fields":[["A2.r01","Emma","match","A2.left.01"],["A2.r02","Daniel","match","A2.left.02"],["A2.r03","Anna and Mark","match","A2.left.03"],["A2.r04","You and I","match","A2.left.04"]],"options":[["A2.right.a","a) We are friends."],["A2.right.b","b) She is a student."],["A2.right.c","c) They are at an English course."],["A2.right.d","d) He is a teacher."]]},{"id":"A3","title":"Complete the sentences","source":"SET_A_EXERCISES_AND_ANSWER_FEEDBACK.md","prompt":"Complete with am, is or are: 1) I __ from Germany. 2) My name __ Emma. 3) You __ my friend. 4) It __ a small city. 5) We __ at an English course. 6) Tom and Anna __ from France.","fields":[["A3.r01","Blank 1 — I __ from Germany"],["A3.r02","Blank 2 — My name __ Emma"],["A3.r03","Blank 3 — You __ my friend"],["A3.r04","Blank 4 — It __ a small city"],["A3.r05","Blank 5 — We __ at an English course"],["A3.r06","Blank 6 — Tom and Anna __ from France"]]},{"id":"A4","title":"Find the incorrect form","source":"SET_A_EXERCISES_AND_ANSWER_FEEDBACK.md","prompt":"Correct one mistake in each: 1) I is Alex. 2) She are a student. 3) They is from Spain. 4) We is friends.","fields":[["A4.r01","Correction 1 — full corrected sentence","area"],["A4.r02","Correction 2 — full corrected sentence","area"],["A4.r03","Correction 3 — full corrected sentence","area"],["A4.r04","Correction 4 — full corrected sentence","area"]]},{"id":"A5","title":"Read and decide: True or False","source":"SET_A_EXERCISES_AND_ANSWER_FEEDBACK.md","prompt":"Read: Emma is from Spain. Daniel is from Italy. Mark and Anna are from Germany. Mark and Anna are at an English course. Decide: 1) Emma is from Spain. 2) Daniel is from Germany. 3) Mark and Anna are at an English course.","fields":[["A5.r01","Decision 1 — Emma is from Spain","decision"],["A5.r02","Decision 2 — Daniel is from Germany","decision"],["A5.r03","Decision 3 — Mark and Anna are at an English course","decision"]]},{"id":"A6","title":"Build the sentence","source":"SET_A_EXERCISES_AND_ANSWER_FEEDBACK.md","prompt":"Put the words in order to make statements: 1) am / I / Alex 2) is / she / a student 3) are / they / friends 4) from / we / are / Poland","fields":[["A6.r01","Sentence 1","area"],["A6.r02","Sentence 2","area"],["A6.r03","Sentence 3","area"],["A6.r04","Sentence 4","area"]]},{"id":"A7","title":"Choose the correct description","source":"SET_A_EXERCISES_AND_ANSWER_FEEDBACK.md","prompt":"Information: Emma is a student. Daniel is a teacher. Choose: A) Emma is a student. Daniel is a teacher. B) Emma is a teacher. Daniel is a student. C) Emma and Daniel are teachers.","fields":[["A7.r01","Choose one description","choice"]],"options":[["A7.opt.A","A) Emma is a student. Daniel is a teacher."],["A7.opt.B","B) Emma is a teacher. Daniel is a student."],["A7.opt.C","C) Emma and Daniel are teachers."]]},{"id":"A8","title":"Make it personal","source":"SET_A_EXERCISES_AND_ANSWER_FEEDBACK.md","prompt":"Write four short sentences using: 1) My name is ... 2) I am from ... 3) I am ... 4) I am a ...","fields":[["A8.r01","Prompt 1 — My name is ...","area"],["A8.r02","Prompt 2 — I am from ...","area"],["A8.r03","Prompt 3 — I am ...","area"],["A8.r04","Prompt 4 — I am a ...","area"]]},{"id":"B1","title":"Choose and complete: affirmative or negative","source":"SET_B_EXERCISES_AND_ANSWER_FEEDBACK.md","prompt":"Part 1: choose the correct sentence: A) She not is a student. B) She is not a student. C) She are not a student. Part 2: complete: They __ from France.","fields":[["B1.part1.r01","Part 1 — choose the sentence","choice"],["B1.part2.r01","Part 2 — They __ from France"]],"options":[["B1.part1.opt.A","A) She not is a student."],["B1.part1.opt.B","B) She is not a student."],["B1.part1.opt.C","C) She are not a student."]]},{"id":"B2","title":"Make the sentence negative","source":"SET_B_EXERCISES_AND_ANSWER_FEEDBACK.md","prompt":"Rewrite in the negative: They are teachers.","fields":[["B2.r01","Full rewritten sentence","area"]]},{"id":"B3","title":"Complete the negative sentences","source":"SET_B_EXERCISES_AND_ANSWER_FEEDBACK.md","prompt":"Complete with am/is/are: 1) I __ not from France. 2) My brother __ not a doctor. 3) We __ not at home. 4) Emma and Lisa __ not colleagues. 5) My parents __ not teachers.","fields":[["B3.r01","Blank 1 — I __ not from France"],["B3.r02","Blank 2 — My brother __ not a doctor"],["B3.r03","Blank 3 — We __ not at home"],["B3.r04","Blank 4 — Emma and Lisa __ not colleagues"],["B3.r05","Blank 5 — My parents __ not teachers"]]},{"id":"B4","title":"Find and correct the mistakes","source":"SET_B_EXERCISES_AND_ANSWER_FEEDBACK.md","prompt":"Correct: 1) He are not my brother. 2) I is not a teacher. 3) They isn't from Germany.","fields":[["B4.r01","Correction 1 — full corrected sentence","area"],["B4.r02","Correction 2 — full corrected sentence","area"],["B4.r03","Correction 3 — full corrected sentence","area"]]},{"id":"B5","title":"Read and decide: True or False","source":"SET_B_EXERCISES_AND_ANSWER_FEEDBACK.md","prompt":"Read: Anna is from Poland. She is a student. Her brother is a doctor. Decide: 1) Anna is from Italy. 2) Anna is a student. 3) Anna's brother is not a doctor.","fields":[["B5.r01","Decision 1 — Anna is from Italy","decision"],["B5.r02","Decision 2 — Anna is a student","decision"],["B5.r03","Decision 3 — Anna's brother is not a doctor","decision"]]},{"id":"B6","title":"Change full forms into short forms","source":"SET_B_EXERCISES_AND_ANSWER_FEEDBACK.md","prompt":"Rewrite using standard short negative forms: 1) He is not a teacher. 2) They are not at home. 3) I am not from Italy.","fields":[["B6.r01","Sentence 1 — full rewritten sentence","area"],["B6.r02","Sentence 2 — full rewritten sentence","area"],["B6.r03","Sentence 3 — full rewritten sentence","area"]]},{"id":"B7","title":"Describe Maria and John","source":"SET_B_EXERCISES_AND_ANSWER_FEEDBACK.md","prompt":"Use the facts to write three sentences: Maria is a colleague. John is a friend. Maria and John are not relatives.","fields":[["B7.r01","Sentence 1 — manifest response slot","area"],["B7.r02","Sentence 2 — manifest response slot","area"],["B7.r03","Sentence 3 — manifest response slot","area"]],"note":"The source requests three sentences but does not label three separate fields. These are renderer-defined capture slots."},{"id":"B8","title":"Tell me about yourself","source":"SET_B_EXERCISES_AND_ANSWER_FEEDBACK.md","prompt":"Write at least three sentences about yourself: name, where you are from, who you are (e.g. student/worker), and one other detail.","fields":[["B8.r01","Complete open response","area"]]},{"id":"C1","title":"Choose the correct question","source":"SET_C_EXERCISES_AND_ANSWER_FEEDBACK.md","prompt":"Choose the standard question: A) Is she from France? B) Are she from France? C) Is from France she?","fields":[["C1.r01","Choose one question","choice"]],"options":[["C1.opt.A","A) Is she from France?"],["C1.opt.B","B) Are she from France?"],["C1.opt.C","C) Is from France she?"]]},{"id":"C2","title":"Put the words in order","source":"SET_C_EXERCISES_AND_ANSWER_FEEDBACK.md","prompt":"Form a standard question: 1) you / are / ready? 2) she / is / a student? 3) they / are / from Germany?","fields":[["C2.r01","Question 1","area"],["C2.r02","Question 2","area"],["C2.r03","Question 3","area"]]},{"id":"C3","title":"Match questions and answers","source":"SET_C_EXERCISES_AND_ANSWER_FEEDBACK.md","prompt":"Match: 1) Where are you from? 2) What is your job? 3) How are you? Answers: a) I'm fine, thank you. b) I'm a student. c) I'm from Spain.","fields":[["C3.r01","1) Where are you from?","match","C3.left.01"],["C3.r02","2) What is your job?","match","C3.left.02"],["C3.r03","3) How are you?","match","C3.left.03"]],"options":[["C3.right.a","a) I'm fine, thank you."],["C3.right.b","b) I'm a student."],["C3.right.c","c) I'm from Spain."]]},{"id":"C4","title":"Give short answers","source":"SET_C_EXERCISES_AND_ANSWER_FEEDBACK.md","prompt":"Give a short answer using the cue: 1) Are you a teacher? (No) 2) Is Emma your friend? (Yes) 3) Are Mark and Anna from Italy? (No)","fields":[["C4.r01","Short answer 1","text"],["C4.r02","Short answer 2","text"],["C4.r03","Short answer 3","text"]]},{"id":"C5","title":"Find and correct the mistakes","source":"SET_C_EXERCISES_AND_ANSWER_FEEDBACK.md","prompt":"Correct the standard questions: 1) Are she a student? 2) Is they from Germany? 3) Where you are from? 4) Where is you from?","fields":[["C5.r01","Correction 1 — full corrected question","area"],["C5.r02","Correction 2 — full corrected question","area"],["C5.r03","Correction 3 — full corrected question","area"],["C5.r04","Correction 4 — full corrected question","area"]]},{"id":"C6","title":"Ask about Daniel","source":"SET_C_EXERCISES_AND_ANSWER_FEEDBACK.md","prompt":"Use the profile to write four questions about Daniel (third person, not addressed to Daniel): Name Daniel; country Canada; job teacher.","fields":[["C6.r01","Question 1 — manifest response slot","area"],["C6.r02","Question 2 — manifest response slot","area"],["C6.r03","Question 3 — manifest response slot","area"],["C6.r04","Question 4 — manifest response slot","area"]],"note":"The source requests four questions but does not number individual question prompts. These are renderer-defined capture slots."},{"id":"C7","title":"Complete the dialogue","source":"SET_C_EXERCISES_AND_ANSWER_FEEDBACK.md","prompt":"Complete: Laura: Hello! My name is Laura. A: Hello, Laura. __ you from Italy? Laura: No, I'm not. I'm from Spain. A: __ you a student? Laura: Yes, I am.","fields":[["C7.r01","Blank 1"],["C7.r02","Blank 2"]]},{"id":"C8","title":"Meet a new neighbour","source":"SET_C_EXERCISES_AND_ANSWER_FEEDBACK.md","prompt":"Write a short dialogue with a new neighbour. Include greeting, question about name, question about origin, one Are you...? question, and suitable answers.","fields":[["C8.r01","Complete dialogue","area"]]},{"id":"D1","title":"Mixed form selection","source":"SET_D_EXERCISES_AND_ANSWER_FEEDBACK.md","prompt":"Complete each sentence with the correct form of `to be`.\n1. My name __ Alex.\n2. __ you from Germany?\n3. They __ teachers. They are students, not teachers.\n4. She __ my sister.","fields":[["D1.r01","Blank 1 — My name __ Alex"],["D1.r02","Blank 2 — __ you from Germany?"],["D1.r03","Blank 3 — They __ teachers"],["D1.r04","Blank 4 — She __ my sister"]]},{"id":"D2","title":"Complete the conversation","source":"SET_D_EXERCISES_AND_ANSWER_FEEDBACK.md","prompt":"Complete the conversation. Use the information in brackets.\n\nA: Hello! What's your name?\nB: My name __ Daniel.\nA: Hi, Daniel. I __ Maria.\nB: Nice to meet you. __ you from Italy?\nA: No, I __ not. I __ from Spain.\nB: __ you a student?\nA: Yes, I __.","fields":[["D2.r01","Blank 1 — My name __ Daniel"],["D2.r02","Blank 2 — I __ Maria"],["D2.r03","Blank 3 — __ you from Italy?"],["D2.r04","Blank 4 — I __ not"],["D2.r05","Blank 5 — I __ from Spain"],["D2.r06","Blank 6 — __ you a student?"],["D2.r07","Blank 7 — Yes, I __"]]},{"id":"D3","title":"Correct the message","source":"SET_D_EXERCISES_AND_ANSWER_FEEDBACK.md","prompt":"Read the message. Find and correct five mistakes.\n\n“Hello! My name are Emma. I is from Poland. My brother are a doctor. We isn't from Germany. Are my brother from Poland?”","fields":[["D3.r01","Correction 1 — manifest response slot","area"],["D3.r02","Correction 2 — manifest response slot","area"],["D3.r03","Correction 3 — manifest response slot","area"],["D3.r04","Correction 4 — manifest response slot","area"],["D3.r05","Correction 5 — manifest response slot","area"]],"note":"The source requests five corrections in one message but does not label five separate fields. These are renderer-defined capture slots."},{"id":"D4","title":"Build sentences from facts","source":"SET_D_EXERCISES_AND_ANSWER_FEEDBACK.md","prompt":"Use the facts to write four sentences:\n- Peter is from France.\n- Peter is not a doctor.\n- Anna and Peter are friends.\n- Anna is a student.\n\nWrite:\n1. Two affirmative sentences.\n2. One negative sentence.\n3. One question about one of the facts.","fields":[["D4.r01","Sentence 1 — affirmative","area"],["D4.r02","Sentence 2 — affirmative","area"],["D4.r03","Sentence 3 — negative","area"],["D4.r04","Sentence 4 — question","area"]]},{"id":"D5","title":"Read and answer","source":"SET_D_EXERCISES_AND_ANSWER_FEEDBACK.md","prompt":"Read the text.\n\n“Sophie is from Belgium. She is a student. Her brother Mark is 25. They are not teachers. They are at an English course.”\n\nAnswer:\n1. Where is Sophie from?\n2. Is Sophie a teacher?\n3. Who is Mark?\n4. Are Sophie and Mark at an English course?","fields":[["D5.r01","Answer 1 — Where is Sophie from?","text"],["D5.r02","Answer 2 — Is Sophie a teacher?","text"],["D5.r03","Answer 3 — Who is Mark?","text"],["D5.r04","Answer 4 — Are Sophie and Mark at an English course?","text"]]},{"id":"D6","title":"Ask and answer from a profile","source":"SET_D_EXERCISES_AND_ANSWER_FEEDBACK.md","prompt":"Use the profile to write each question and a short answer.\n\n**Profile:** Lucas; from Portugal; 28 years old; an engineer.\n\n1. Ask his name.\n2. Ask where he is from.\n3. Ask how old he is.\n4. Ask whether he is an engineer.","fields":[["D6.r01.question","Pair 1 — question"],["D6.r01.answer","Pair 1 — short answer"],["D6.r02.question","Pair 2 — question"],["D6.r02.answer","Pair 2 — short answer"],["D6.r03.question","Pair 3 — question"],["D6.r03.answer","Pair 3 — short answer"],["D6.r04.question","Pair 4 — question"],["D6.r04.answer","Pair 4 — short answer"]]},{"id":"D7","title":"Meet a new neighbour","source":"SET_D_EXERCISES_AND_ANSWER_FEEDBACK.md","prompt":"Imagine you meet a new neighbour. Write a short conversation. Include:\n- a greeting;\n- your name and where you are from;\n- at least two questions to the neighbour;\n- suitable answers from the neighbour.","fields":[["D7.r01","Complete conversation","area"]]},{"id":"D8","title":"Independent introduction and meeting another person","source":"SET_D_EXERCISES_AND_ANSWER_FEEDBACK.md","prompt":"Complete both parts. They may be presented sequentially.\n\n**Part 1 — Introduce yourself**\nWrite a short introduction including:\n- your name;\n- your country or city;\n- your profession or student status;\n- one additional detail.\nYou may include a negative sentence if it is natural, but it is optional.\n\n**Part 2 — Meet another person**\nWrite a short exchange with another person. Ask three questions and provide three suitable short answers.","fields":[["D8.part1.r01","Part 1 — complete introduction","area"],["D8.part2.r01","Part 2 — complete exchange","area"]]}];
+const PACKAGE = { packageId:"TO_BE_A1_FULL_CONTENT_LIBRARY", contentVersion:"v1.0.2-draft" };
+const state = new Map();
+let currentIndex = 0;
+const $ = (id) => document.getElementById(id);
+function esc(value){return String(value).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));}
+function markdownPrompt(source){
+  const lines=source.split("\n"); let html="", inList=false;
+  for(const line of lines){
+    if(line.startsWith("- ")){if(!inList){html+="<ul>";inList=true;}html+="<li>"+inlineMarkdown(line.slice(2))+"</li>";continue;}
+    if(inList){html+="</ul>";inList=false;}
+    if(!line.trim()){html+="<p></p>";continue;}
+    html+="<p>"+inlineMarkdown(line)+"</p>";
+  }
+  if(inList)html+="</ul>";
+  return html;
+}
+function inlineMarkdown(line){
+  return esc(line).replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>").replace(/`([^`]+)`/g,"<code>$1</code>");
+}
+function current(){return EXERCISES[currentIndex];}
+function getExerciseState(id){
+  if(!state.has(id))state.set(id,{});
+  return state.get(id);
+}
+function controlValue(exerciseId,fieldId){
+  const item=getExerciseState(exerciseId)[fieldId];
+  return item ? item.value : "";
+}
+function fieldStatus(exerciseId,fieldId){
+  const item=getExerciseState(exerciseId)[fieldId];
+  if(!item)return "NOT_TOUCHED";
+  return item.value === "" ? "EMPTY" : "VALUE";
+}
+function setField(exercise,fieldId,value,extra={}){
+  const record=getExerciseState(exercise.id);
+  record[fieldId]={value,...extra};
+  renderPayload();
+}
+function makeControl(ex,field){
+  const [id,label,type="text",relatedId]=field;
+  const wrap=document.createElement("div");wrap.className="field";
+  const labelEl=document.createElement("label");labelEl.textContent=label;labelEl.htmlFor="control-"+id;wrap.appendChild(labelEl);
+  if(type==="choice"){
+    const group=document.createElement("div");group.className="choice-list";
+    for(const [optionId,display] of ex.options){
+      const row=document.createElement("label");row.className="choice";
+      const radio=document.createElement("input");radio.type="radio";radio.name="group-"+id;radio.id="control-"+id+"-"+optionId;radio.value=optionId;radio.checked=controlValue(ex.id,id)===optionId;
+      radio.addEventListener("change",()=>setField(ex,id,optionId,{selectedOptionId:optionId,displayText:display}));
+      const span=document.createElement("span");span.textContent=display;
+      row.append(radio,span);group.appendChild(row);
+    }
+    wrap.appendChild(group);return wrap;
+  }
+  if(type==="match"){
+    const select=document.createElement("select");select.id="control-"+id;
+    const empty=document.createElement("option");empty.value="";empty.textContent="Choose a matching description";select.appendChild(empty);
+    for(const [optionId,display] of ex.options){const option=document.createElement("option");option.value=optionId;option.textContent=display;select.appendChild(option);}
+    select.value=controlValue(ex.id,id);
+    select.addEventListener("change",()=>{const found=ex.options.find(o=>o[0]===select.value);setField(ex,id,select.value,{selectedOptionId:select.value||null,displayText:found?found[1]:null,matchingLeftItemId:relatedId});});
+    wrap.appendChild(select);return wrap;
+  }
+  if(type==="decision"){
+    const select=document.createElement("select");select.id="control-"+id;
+    for(const [value,text] of [["","Choose True or False"],["True","True"],["False","False"]]){const o=document.createElement("option");o.value=value;o.textContent=text;select.appendChild(o);}
+    select.value=controlValue(ex.id,id);
+    select.addEventListener("change",()=>setField(ex,id,select.value,{displayText:select.value||null,optionIdentity:"SOURCE_LABEL_ONLY"}));
+    wrap.appendChild(select);return wrap;
+  }
+  const control=document.createElement(type==="area"?"textarea":"input");
+  if(type!=="area")control.type="text";
+  control.id="control-"+id;control.value=controlValue(ex.id,id);
+  control.addEventListener("input",()=>setField(ex,id,control.value));
+  wrap.appendChild(control);return wrap;
+}
+function renderPayload(){
+  const ex=current(),values=getExerciseState(ex.id);
+  const responses=ex.fields.map(([id,label,type,relatedId])=>{
+    const saved=values[id];
+    const record={responseUnitId:id,label,status:fieldStatus(ex.id,id),rawValue:saved?saved.value:""};
+    if(type==="choice"||type==="match"){
+      record.selectedOptionId=saved?.selectedOptionId??null;
+      record.displayText=saved?.displayText??null;
+    }
+    if(type==="match")record.matchingLeftItemId=relatedId;
+    if(type==="decision")record.optionIdentity="SOURCE_LABEL_ONLY";
+    return record;
+  });
+  const payload={captureType:"RAW_UI_SNAPSHOT",schemaVersion:"to-be-a1-raw-ui-capture-v0.1",sourcePackage:PACKAGE,sourceDocument:ex.source,exerciseId:ex.id,sourceHeading:ex.id+" — "+ex.title,responses};
+  $("rawPayload").textContent=JSON.stringify(payload,null,2);
+}
+function render(){
+  const ex=current();
+  $("exerciseSelect").value=ex.id;
+  $("exerciseId").textContent=ex.id;
+  $("sourceDoc").textContent=ex.source;
+  $("exerciseTitle").textContent=ex.title;
+  $("exercisePrompt").innerHTML=markdownPrompt(ex.prompt);
+  $("unresolvedNote").innerHTML=ex.note?'<div class="unresolved"><strong>Renderer decision:</strong> '+esc(ex.note)+'</div>':"";
+  const fields=$("responseFields");fields.replaceChildren();
+  for(const field of ex.fields)fields.appendChild(makeControl(ex,field));
+  $("previousButton").disabled=currentIndex===0;
+  $("nextButton").disabled=currentIndex===EXERCISES.length-1;
+  renderPayload();
+}
+function changeExercise(id){const index=EXERCISES.findIndex(ex=>ex.id===id);if(index>=0){currentIndex=index;render();}}
+for(const ex of EXERCISES){const option=document.createElement("option");option.value=ex.id;option.textContent=ex.id+" — "+ex.title;$("exerciseSelect").appendChild(option);}
+$("exerciseSelect").addEventListener("change",e=>changeExercise(e.target.value));
+$("previousButton").addEventListener("click",()=>{if(currentIndex>0){currentIndex--;render();}});
+$("nextButton").addEventListener("click",()=>{if(currentIndex<EXERCISES.length-1){currentIndex++;render();}});
+$("clearButton").addEventListener("click",()=>{state.delete(current().id);render();});
+render();
+</script>
+</body>
+</html>
