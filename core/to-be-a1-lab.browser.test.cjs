@@ -30,6 +30,7 @@ const assert = require("node:assert/strict");
       await page.locator("#exerciseSelect").selectOption(id);
       assert.equal((await page.locator("#exerciseId").textContent()).trim(), id);
       assert.ok((await page.locator("#exercisePrompt").textContent()).trim().length > 0, `${id} prompt must render`);
+      assert.ok((await page.locator("#unresolvedNote").textContent()).includes("Renderer decision — not source-authored UI:"), `${id} provisional control layout must be disclosed`);
       assert.ok((await page.locator("#sourceDoc").textContent()).includes(`SET_${id[0]}_EXERCISES_AND_ANSWER_FEEDBACK.md`));
     }
 
