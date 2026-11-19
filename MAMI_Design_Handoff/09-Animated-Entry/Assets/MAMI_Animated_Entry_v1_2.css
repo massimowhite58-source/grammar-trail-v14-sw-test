@@ -1,0 +1,10 @@
+.mami-entry{--mami-navy:#080F27;--mami-gold:#D9A441;--mami-gold-highlight:#F3D58A;position:fixed;inset:0;z-index:9999;display:grid;place-items:center;overflow:hidden;background:var(--mami-navy);color:var(--mami-gold-highlight)}
+.mami-entry__lockup{width:min(76vw,760px);display:grid;justify-items:center;gap:clamp(22px,4vh,40px)}
+.mami-entry__symbol{display:block;width:100%;height:auto;object-fit:contain;clip-path:inset(0 100% 0 0);animation:mami-symbol-reveal 1.45s cubic-bezier(.2,.75,.2,1) both}
+.mami-entry__name{margin:0;color:var(--mami-gold-highlight);font:500 clamp(20px,3.2vw,36px)/1.2 Inter,Manrope,system-ui,sans-serif;letter-spacing:.065em;text-align:center;white-space:nowrap;clip-path:inset(0 100% 0 0);animation:mami-name-reveal .9s cubic-bezier(.2,.75,.2,1) 1.45s both}
+@keyframes mami-symbol-reveal{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+@keyframes mami-name-reveal{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+.mami-entry.is-exiting{animation:mami-entry-exit .3s ease forwards}
+@keyframes mami-entry-exit{to{opacity:0;visibility:hidden}}
+@media(max-width:600px){.mami-entry__lockup{width:88vw;gap:clamp(18px,3.5vh,28px)}.mami-entry__name{font-size:clamp(17px,4.7vw,25px);letter-spacing:.035em;white-space:normal}}
+@media(prefers-reduced-motion:reduce){.mami-entry__symbol,.mami-entry__name{animation:none;clip-path:none}.mami-entry.is-exiting{animation:none;opacity:0;visibility:hidden}}
