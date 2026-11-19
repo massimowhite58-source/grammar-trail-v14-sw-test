@@ -1,0 +1,71 @@
+/* MAMI UI Kit — Foundation tokens v1.2 handoff
+   Approved ribbon logo unchanged. Dark primary, Light alternative.
+*/
+:root {
+  color-scheme: dark;
+  --mami-navy-950:#080F27; --mami-navy-900:#0B1530; --mami-navy-850:#101C36;
+  --mami-navy-800:#14213D; --mami-navy-700:#24334F;
+  --mami-gold-800:#805018; --mami-gold-700:#9B641E; --mami-gold-500:#D9A441; --mami-gold-300:#F3D58A;
+  --mami-ivory-50:#F4F0E8; --mami-white:#FFFFFF;
+  --color-bg:var(--mami-navy-950); --color-bg-subtle:#0A142D; --color-surface:var(--mami-navy-900);
+  --color-surface-raised:var(--mami-navy-850); --color-surface-overlay:#172440;
+  --color-text:#FFFFFF; --color-text-muted:#B8C1D2; --color-text-subtle:#8995AB;
+  --color-border:#2A3854; --color-border-strong:#465572;
+  --color-accent:var(--mami-gold-500); --color-accent-hover:#E5B85E; --color-accent-pressed:#C18A2D;
+  --color-accent-soft:rgba(217,164,65,.14); --color-on-accent:#17120A; --color-link:#E8C779;
+  --color-success:#58B88A; --color-success-soft:rgba(88,184,138,.14);
+  --color-warning:#E6B85C; --color-warning-soft:rgba(230,184,92,.14);
+  --color-danger:#F07878; --color-danger-soft:rgba(240,120,120,.14);
+  --color-info:#78AEEA; --color-info-soft:rgba(120,174,234,.14);
+  --font-display:"Manrope","Inter",system-ui,sans-serif; --font-body:"Inter","Manrope",system-ui,sans-serif;
+  --font-mono:ui-monospace,"SFMono-Regular",Consolas,monospace;
+  --text-xs:.75rem; --text-sm:.875rem; --text-md:1rem; --text-lg:1.125rem;
+  --text-xl:1.25rem; --text-2xl:1.5rem; --text-3xl:1.875rem; --text-4xl:2.25rem;
+  --line-tight:1.2; --line-normal:1.5; --line-relaxed:1.65;
+  --space-0:0; --space-1:.25rem; --space-2:.5rem; --space-3:.75rem; --space-4:1rem;
+  --space-5:1.25rem; --space-6:1.5rem; --space-8:2rem; --space-10:2.5rem; --space-12:3rem; --space-16:4rem;
+  --radius-sm:8px; --radius-md:14px; --radius-lg:20px; --radius-xl:28px; --radius-pill:999px;
+  --content-max:1200px; --space-page:32px; --color-accent-strong:var(--color-accent-hover);
+  --sidebar-width:248px; --header-height:68px; --border-width:1px;
+  --shadow-card:0 12px 32px rgba(0,0,0,.22); --shadow-overlay:0 24px 64px rgba(0,0,0,.38);
+  --focus-ring:0 0 0 3px rgba(217,164,65,.38); --focus-outline:2px solid var(--color-accent);
+  --motion-fast:120ms; --motion-standard:180ms; --motion-slow:240ms; --ease-standard:cubic-bezier(.2,.7,.2,1);
+  --control-height-sm:36px; --control-height-md:44px; --control-height-lg:52px;
+}
+[data-theme="light"] {
+  color-scheme:light; --color-bg:var(--mami-ivory-50); --color-bg-subtle:#EEE9DF;
+  --color-surface:#FFF; --color-surface-raised:#FFF; --color-surface-overlay:#FFF;
+  --color-text:#171B25; --color-text-muted:#505B6D; --color-text-subtle:#687386;
+  --color-border:#E1DCCF; --color-border-strong:#B8B1A3;
+  --color-accent:var(--mami-gold-700); --color-accent-strong:var(--color-accent-pressed);
+  --color-accent-hover:#875719; --color-accent-pressed:#704512; --color-accent-soft:rgba(155,100,30,.10);
+  --color-on-accent:#FFF; --color-link:#805018;
+  --color-success:#18794E; --color-success-soft:#E5F4EC; --color-warning:#805A13; --color-warning-soft:#FBF1D9;
+  --color-danger:#B42318; --color-danger-soft:#FDEAE8; --color-info:#245E9B; --color-info-soft:#E8F1FB;
+  --shadow-card:0 8px 24px rgba(27,31,40,.08); --shadow-overlay:0 20px 48px rgba(27,31,40,.16);
+  --focus-ring:0 0 0 3px rgba(155,100,30,.24);
+}
+*{box-sizing:border-box} html{font-family:var(--font-body);font-size:16px}
+body{margin:0;background:var(--color-bg);color:var(--color-text);line-height:var(--line-normal);text-rendering:optimizeLegibility}
+h1,h2,h3,h4{font-family:var(--font-display);line-height:var(--line-tight);letter-spacing:-.025em;margin:0}
+p{margin:0 0 var(--space-4)} button,input,select,textarea{font:inherit} button{cursor:pointer}
+:focus-visible{outline:var(--focus-outline);outline-offset:2px;box-shadow:var(--focus-ring)}
+:disabled,[aria-disabled="true"]{cursor:not-allowed;opacity:.56}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+.mami-container{width:min(calc(100% - 2 * var(--space-page)),var(--content-max));margin-inline:auto}
+.mami-page{min-height:100dvh;background:var(--color-bg);color:var(--color-text)}
+.mami-card{background:var(--color-surface);border:var(--border-width) solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-card);padding:var(--space-6)}
+.mami-divider{border:0;border-top:1px solid var(--color-border)}
+.mami-button{min-height:var(--control-height-md);display:inline-flex;align-items:center;justify-content:center;gap:var(--space-2);padding:0 var(--space-4);border-radius:var(--radius-md);border:1px solid transparent;font-weight:600;line-height:1;transition:background var(--motion-standard) var(--ease-standard),border-color var(--motion-standard) var(--ease-standard),transform var(--motion-fast) var(--ease-standard)}
+.mami-button:active{transform:translateY(1px)} .mami-button--primary{color:var(--color-on-accent);background:var(--color-accent)}
+.mami-button--primary:hover{background:var(--color-accent-hover)} .mami-button--primary:active{background:var(--color-accent-pressed)}
+.mami-button--secondary{color:var(--color-text);background:var(--color-surface-raised);border-color:var(--color-border-strong)}
+.mami-button--ghost{color:var(--color-text);background:transparent;border-color:transparent}
+.mami-button--danger{color:#FFF;background:var(--color-danger)}
+.mami-field{width:100%;min-height:var(--control-height-md);padding:0 var(--space-3);color:var(--color-text);background:var(--color-surface);border:1px solid var(--color-border-strong);border-radius:var(--radius-md)}
+.mami-field::placeholder{color:var(--color-text-subtle)} .mami-field[aria-invalid="true"]{border-color:var(--color-danger)}
+.mami-field__hint{color:var(--color-text-muted);font-size:var(--text-sm)} .mami-field__error{color:var(--color-danger);font-size:var(--text-sm)}
+@media(max-width:767px){:root{--header-height:60px;--space-page:16px}.mami-card{padding:var(--space-4);border-radius:var(--radius-md)}}
+@media(min-width:768px) and (max-width:1023px){:root{--space-page:24px}}
+@media(min-width:1024px){:root{--space-page:32px}}
+@media(min-width:1440px){:root{--space-page:32px}}
