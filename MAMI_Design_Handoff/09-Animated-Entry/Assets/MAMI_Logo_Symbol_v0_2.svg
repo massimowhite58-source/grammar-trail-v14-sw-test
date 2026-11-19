@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="180 175 830 335" role="img" aria-labelledby="title desc">
+<title id="title">MAMI gold ribbon symbol</title><desc id="desc">Approved v0.2 refined gold ribbon mark, with a slimmer left ribbon and open negative space.</desc>
+<defs>
+<linearGradient id="goldLeft" x1="0" y1="0" x2="1" y2=".15"><stop offset="0" stop-color="#8B541B"/><stop offset=".18" stop-color="#DCA94B"/><stop offset=".38" stop-color="#FFF0B0"/><stop offset=".56" stop-color="#B77B2B"/><stop offset=".77" stop-color="#F5D47C"/><stop offset="1" stop-color="#87501A"/></linearGradient>
+<linearGradient id="goldRight" x1="0" y1="0" x2="1" y2=".08"><stop offset="0" stop-color="#98601F"/><stop offset=".18" stop-color="#E6B653"/><stop offset=".36" stop-color="#FFF2B7"/><stop offset=".53" stop-color="#C58A32"/><stop offset=".73" stop-color="#F8D982"/><stop offset="1" stop-color="#89521B"/></linearGradient>
+<linearGradient id="glint" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF9D6" stop-opacity=".85"/><stop offset=".45" stop-color="#FFF0B1" stop-opacity=".2"/><stop offset="1" stop-color="#704313" stop-opacity=".4"/></linearGradient>
+<filter id="shadow" x="-20%" y="-40%" width="140%" height="190%"><feGaussianBlur stdDeviation="5"/></filter>
+</defs>
+<g id="ribbon-symbol">
+<g opacity=".12" filter="url(#shadow)" fill="#8C5A21"><ellipse cx="286" cy="482" rx="46" ry="5"/><ellipse cx="535" cy="485" rx="96" ry="7"/><ellipse cx="950" cy="484" rx="34" ry="4"/></g>
+<path id="left-ribbon" fill="url(#goldLeft)" d="M242 475 C285 468 316 444 349 405 C397 347 438 262 478 221 C496 202 514 195 532 201 C568 213 596 267 629 309 C641 325 650 340 659 356 C644 344 627 329 612 315 C584 287 558 253 535 245 C512 237 494 254 477 278 C441 329 410 393 367 433 C331 466 291 475 242 475 Z"/>
+<path d="M248 472 C309 455 346 407 390 344 C433 282 474 211 510 202" fill="none" stroke="url(#glint)" stroke-width="3" opacity=".65"/>
+<path id="right-ribbon" fill="url(#goldRight)" d="M414 475 C485 474 548 451 600 412 C657 369 700 294 746 234 C765 210 783 195 803 199 C841 205 863 263 885 325 C910 394 933 456 979 480 C934 479 901 465 879 439 C852 407 839 357 820 308 C805 270 793 250 778 255 C758 262 738 300 713 340 C670 409 625 459 562 476 C514 489 462 484 414 475 Z"/>
+<path d="M425 472 C512 467 584 429 642 366 C699 303 748 213 790 201" fill="none" stroke="#FFF4C4" stroke-width="3" opacity=".55"/>
+<path d="M979 480 C932 474 910 443 892 407 C867 356 849 283 822 239" fill="none" stroke="#754719" stroke-width="4" opacity=".25"/>
+<path d="M243 475 C300 470 333 448 366 411" fill="none" stroke="#FFE7A0" stroke-width="2" opacity=".55"/>
+</g></svg>
